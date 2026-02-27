@@ -1,0 +1,10 @@
+{
+  "name": "DaoThewa",
+  "displayName": "ดาวเทวา",
+  "version": "1.0.0",
+  "buildNumber": 1,
+  "bundleId": {
+    "ios": "com.daothewa.app",
+    "android": "com.daothewa.app"
+  }
+}

@@ -1,0 +1,17 @@
+const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+
+/**
+ * Metro configuration for ดาวเทวา
+ * https://facebook.github.io/metro/docs/configuration
+ */
+const config = {
+  resolver: {
+    assetExts: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'ttf', 'otf'],
+    sourceExts: ['js', 'jsx', 'ts', 'tsx', 'json'],
+  },
+  transformer: {
+    babelTransformerPath: require.resolve('react-native-svg-transformer'),
+  },
+};
+
+module.exports = mergeConfig(getDefaultConfig(__dirname), config);
