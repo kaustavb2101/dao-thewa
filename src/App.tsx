@@ -4,14 +4,16 @@
  * Root application component
  */
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {StatusBar, StyleSheet, View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import {TabNavigator} from './navigation/TabNavigator';
+import OnboardingScreen from './screens/OnboardingScreen';
 import {Colors} from './theme/colors';
+import {useUserStore} from './stores/userStore';
 
 // ─────────────────────────────────────────────
 // React Query Client
@@ -50,21 +52,44 @@ const DaoThewaTheme = {
 };
 
 // ─────────────────────────────────────────────
-// Root App
+// Root App — shows Onboarding on first launch,
+// then TabNavigator once user profile is saved.
 // ─────────────────────────────────────────────
+function AppContent(): React.JSX.Element {
+  const {isOnboarded, loadFromStorage} = useUserStore();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    loadFromStorage().finally(() => setHydrated(true));
+  }, []);
+
+  // Brief blank screen while AsyncStorage loads
+  if (!hydrated) return <View style={styles.root} />;
+
+  if (!isOnboarded) {
+    return (
+      <>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.bg.deep} />
+        <OnboardingScreen onComplete={() => {/* Zustand reactivity handles re-render */}} />
+      </>
+    );
+  }
+
+  return (
+    <NavigationContainer theme={DaoThewaTheme}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.bg.deep} />
+      <View style={styles.root}>
+        <TabNavigator />
+      </View>
+    </NavigationContainer>
+  );
+}
+
 function App(): React.JSX.Element {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <NavigationContainer theme={DaoThewaTheme}>
-          <StatusBar
-            barStyle="light-content"
-            backgroundColor={Colors.bg.deep}
-          />
-          <View style={styles.root}>
-            <TabNavigator />
-          </View>
-        </NavigationContainer>
+        <AppContent />
       </QueryClientProvider>
     </SafeAreaProvider>
   );

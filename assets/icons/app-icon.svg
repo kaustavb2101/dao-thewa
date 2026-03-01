@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0D1A40"/>
+      <stop offset="100%" stop-color="#030610"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F5C842" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#F5C842" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft-glow">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+
+  <!-- Subtle star field -->
+  <circle cx="180" cy="160" r="2.5" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="820" cy="200" r="2"   fill="#FFFFFF" opacity="0.3"/>
+  <circle cx="120" cy="600" r="2"   fill="#FFFFFF" opacity="0.25"/>
+  <circle cx="880" cy="750" r="3"   fill="#FFFFFF" opacity="0.35"/>
+  <circle cx="300" cy="880" r="2"   fill="#FFFFFF" opacity="0.2"/>
+  <circle cx="740" cy="900" r="2.5" fill="#FFFFFF" opacity="0.3"/>
+  <circle cx="950" cy="400" r="2"   fill="#FFFFFF" opacity="0.25"/>
+  <circle cx="70"  cy="400" r="1.5" fill="#FFFFFF" opacity="0.3"/>
+
+  <!-- Central glow -->
+  <circle cx="512" cy="490" r="320" fill="url(#glow)"/>
+
+  <!-- Orbit rings -->
+  <circle cx="512" cy="490" r="200" fill="none" stroke="#F5C842" stroke-width="1.5" stroke-opacity="0.12"/>
+  <circle cx="512" cy="490" r="260" fill="none" stroke="#F5C842" stroke-width="1"   stroke-opacity="0.08"/>
+  <circle cx="512" cy="490" r="310" fill="none" stroke="#F5C842" stroke-width="0.8" stroke-opacity="0.05"/>
+
+  <!-- Small planet dots on orbits -->
+  <circle cx="712" cy="490" r="7"  fill="#E8880A" opacity="0.8"/>
+  <circle cx="284" cy="416" r="5"  fill="#C8C8E0" opacity="0.6"/>
+  <circle cx="614" cy="254" r="6"  fill="#F5C842" opacity="0.7"/>
+  <circle cx="367" cy="718" r="5"  fill="#80CBC4" opacity="0.6"/>
+  <circle cx="772" cy="364" r="4"  fill="#EF5350" opacity="0.7"/>
+  <circle cx="440" cy="210" r="4"  fill="#B0BEC5" opacity="0.5"/>
+
+  <!-- ✦ Gold star rays (8-pointed) -->
+  <g transform="translate(512,490)" filter="url(#soft-glow)">
+    <!-- Long rays -->
+    <line x1="0" y1="-130" x2="0"    y2="130"  stroke="#F5C842" stroke-width="2.5" stroke-opacity="0.15"/>
+    <line x1="-130" y1="0" x2="130"  y2="0"    stroke="#F5C842" stroke-width="2.5" stroke-opacity="0.15"/>
+    <!-- Diagonal rays -->
+    <line x1="-92" y1="-92" x2="92"  y2="92"   stroke="#F5C842" stroke-width="1.5" stroke-opacity="0.1"/>
+    <line x1="92"  y1="-92" x2="-92" y2="92"   stroke="#F5C842" stroke-width="1.5" stroke-opacity="0.1"/>
+  </g>
+
+  <!-- Central lotus / star motif -->
+  <g transform="translate(512,490)">
+    <!-- Outer lotus petals (8 petals) -->
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(0)"/>
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(45)"/>
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(90)"/>
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(135)"/>
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(180)"/>
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(225)"/>
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(270)"/>
+    <ellipse rx="22" ry="72" fill="#F5C842" opacity="0.18" transform="rotate(315)"/>
+    <!-- Inner petals (brighter) -->
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(22.5)"/>
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(67.5)"/>
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(112.5)"/>
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(157.5)"/>
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(202.5)"/>
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(247.5)"/>
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(292.5)"/>
+    <ellipse rx="14" ry="52" fill="#F5C842" opacity="0.45" transform="rotate(337.5)"/>
+    <!-- Center circle -->
+    <circle r="40" fill="#0D1A40"/>
+    <circle r="36" fill="none" stroke="#F5C842" stroke-width="2" stroke-opacity="0.6"/>
+    <!-- Inner star ✦ -->
+    <text text-anchor="middle" dominant-baseline="central" font-size="38" fill="#F5C842" font-family="serif">✦</text>
+  </g>
+
+  <!-- ดาวเทวา Thai text -->
+  <text x="512" y="680" text-anchor="middle" font-family="'Sarabun', 'Noto Sans Thai', sans-serif"
+        font-size="72" font-weight="300" fill="#F5C842" letter-spacing="8" opacity="0.95">ดาวเทวา</text>
+
+  <!-- Decorative border -->
+  <rect x="8" y="8" width="1008" height="1008" rx="215"
+        fill="none" stroke="#F5C842" stroke-width="3" stroke-opacity="0.12"/>
+</svg>
