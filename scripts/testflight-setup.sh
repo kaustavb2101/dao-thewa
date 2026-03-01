@@ -1,0 +1,31 @@
+#!/bin/bash
+# ดาวเทวา — TestFlight deploy checklist
+# Run from project root after npm install succeeds
+
+echo "📱 ดาวเทวา — TestFlight Setup"
+echo "=============================="
+echo ""
+echo "PREREQUISITES:"
+echo "  1. Xcode 15+ installed"
+echo "  2. Apple Developer account with app registered"
+echo "  3. .env filled with CLAUDE_API_KEY and REVENUECAT_API_KEY_IOS"
+echo ""
+echo "STEPS:"
+echo "  1. npm install --legacy-peer-deps"
+echo "  2. cd ios && pod install && cd .."
+echo "  3. npx jest --testPathPattern=tests/  # all must pass"
+echo "  4. Open DaoThewa.xcworkspace in Xcode"
+echo "  5. Select target device: Any iOS Device (arm64)"
+echo "  6. Product → Archive"
+echo "  7. Distribute → App Store Connect → TestFlight"
+echo ""
+echo "ENV REQUIRED (copy .env.example → .env):"
+echo "  CLAUDE_API_KEY=sk-ant-..."
+echo "  REVENUECAT_API_KEY_IOS=appl_..."
+echo ""
+echo "ANDROID (Wear OS):"
+echo "  npx react-native run-android --variant=release"
+echo ""
+echo "COWORK SCHEDULER REGISTRATION:"
+echo "  /schedule daily at 05:30 Asia/Bangkok"
+echo '  Task: node -e "require('"'"'./src/api/DailyScheduler'"'"').DailyScheduler.runMorningComputation()"'
