@@ -1,0 +1,71 @@
+# ดาวเทวา — Codemagic CI/CD
+# Builds iOS on Mac cloud servers and pushes to TestFlight
+# Sign up free at codemagic.io → connect your repo → it reads this file automatically
+
+workflows:
+
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    environment:
+      node: v22.0.0
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: com.daothewa.app          # ← change to your bundle ID
+        APP_STORE_APPLE_ID: "your@email.com" # ← your Apple ID email
+      groups:
+        - app_store_credentials              # set in Codemagic dashboard
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.daothewa.app
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install --legacy-peer-deps
+
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+
+      - name: Set version
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)
+          agvtool new-version -all $((LATEST + 1))
+
+      - name: Build iOS release
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/DaoThewa.xcworkspace" \
+            --scheme "DaoThewa" \
+            --config "Release"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        beta_groups:
+          - "Internal Testers"
+
+  android-play-store:
+    name: Android → Play Store (optional)
+    max_build_duration: 60
+    environment:
+      node: v22.0.0
+      java: 17
+    scripts:
+      - name: Install dependencies
+        script: npm install --legacy-peer-deps
+      - name: Build Android release
+        script: |
+          cd android
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/**/*.aab
