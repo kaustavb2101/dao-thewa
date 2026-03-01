@@ -1,139 +1,120 @@
 /**
- * ดาวเทวา — useDailyData Hook
- * React Query hook: orchestrates AstronomicalEngine → ThaiRulesEngine → InterpretationEngine
- * Full computation logic implemented by Agents 2, 3, 5.
+ * ดาวเทวา — useDailyData
+ * Full pipeline: AstronomicalEngine → ThaiRulesEngine → InterpretationEngine
+ * React Query with 30-min stale time + 6-hour cache
  */
-
 import {useQuery} from '@tanstack/react-query';
-import {DateTime} from 'luxon';
-import {BANGKOK_TIMEZONE, CACHE_TTL_MS} from '../../config/constants';
+import {AstronomicalEngine, DailyAstroData} from '../engines/AstronomicalEngine';
+import {ThaiRulesEngine, DailyInterpretation, RuleInputData} from '../engines/ThaiRulesEngine';
+import {InterpretationEngine, GeneratedBrief} from '../api/InterpretationEngine';
+import {useUserStore} from '../stores/userStore';
 
-// ─────────────────────────────────────────────
-// Output types (consumed by all screens)
-// ─────────────────────────────────────────────
-export interface PlanetPosition {
-  grahaKey: string;
-  longitude: number;    // ecliptic degrees 0–360
-  rasiIndex: number;    // which of 12 zodiac signs (0–11)
-  nakshatraIndex: number; // which of 27 nakshatras (0–26)
-  isRetrograde: boolean;
-}
-
-export interface HoraData {
-  currentGraha: string;   // which planet rules this hour
-  horaStartTime: Date;
-  horaEndTime: Date;
-  horaIndex: number;      // 0–23 within the day
-}
-
-export interface LunarData {
-  phase: number;          // 0–1 (new→full→new)
-  phaseNameThai: string;
-  moonLongitude: number;
-  nakshatraIndex: number;
-  tithi: number;          // lunar day 1–30
-}
-
-export interface ThaiDateData {
-  buddhistYear: number;
-  thaiMonthName: string;
-  thaiDayName: string;
-  wanGerdIndex: number;   // day of week 0–6
-}
-
-export interface AuspiciousnessData {
-  overallScore: number;   // 0–100
-  level: string;          // 'VERY_AUSPICIOUS' | 'AUSPICIOUS' | etc.
-  factors: Array<{
-    rule: string;
-    impact: number;       // positive or negative
-    descriptionThai: string;
-  }>;
-}
-
-export interface DailyBrief {
-  headlineThai: string;
-  bodyThai: string;
-  luckyColor: string;
-  luckyNumber: number;
-  luckyDirection: string;
-  warningThai: string | null;
-  generatedAt: Date;
-  fromCache: boolean;
-}
+// ─── TYPES ────────────────────────────────────────────────────────
 
 export interface DailyData {
-  date: Date;
-  planets: PlanetPosition[];
-  hora: HoraData;
-  lunar: LunarData;
-  thaiDate: ThaiDateData;
-  auspiciousness: AuspiciousnessData;
-  brief: DailyBrief | null;
+  astroData:      DailyAstroData;
+  interpretation: DailyInterpretation;
+  brief:          GeneratedBrief;
+  // Convenience shortcuts for screens
+  planets:        DailyAstroData['planets'];
+  lunarPhase:     DailyAstroData['lunarPhase'];
+  currentHora:    DailyAstroData['currentHora'];
+  thaiDate:       DailyAstroData['thaiDate'];
 }
 
-// ─────────────────────────────────────────────
-// Query key factory
-// ─────────────────────────────────────────────
-export const dailyDataKeys = {
-  all: ['dailyData'] as const,
-  forDate: (dateStr: string) => [...dailyDataKeys.all, dateStr] as const,
+// ─── QUERY KEY ────────────────────────────────────────────────────
+// Refreshes once per calendar day (Bangkok time)
+const todayKey = () => {
+  const now = new Date();
+  // Use Bangkok date (UTC+7)
+  const bkk = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  return bkk.toISOString().split('T')[0];
 };
 
-// ─────────────────────────────────────────────
-// Placeholder fetch function
-// Replaced by full implementation in Agent 5
-// ─────────────────────────────────────────────
-async function fetchDailyData(date: Date): Promise<DailyData> {
-  // TODO (Agent 2): Replace with AstronomicalEngine.computeDailyData(date)
-  // TODO (Agent 3): Pipe through ThaiRulesEngine.interpret(astroData)
-  // TODO (Agent 5): Pipe through InterpretationEngine.generateDailyBrief()
+// ─── MAIN HOOK ────────────────────────────────────────────────────
 
-  // Placeholder data for scaffold validation
-  return {
-    date,
-    planets: [],
-    hora: {
-      currentGraha: 'SURYA',
-      horaStartTime: new Date(),
-      horaEndTime: new Date(),
-      horaIndex: 0,
-    },
-    lunar: {
-      phase: 0,
-      phaseNameThai: 'กำลังคำนวณ...',
-      moonLongitude: 0,
-      nakshatraIndex: 0,
-      tithi: 1,
-    },
-    thaiDate: {
-      buddhistYear: new Date().getFullYear() + 543,
-      thaiMonthName: 'กำลังคำนวณ...',
-      thaiDayName: 'กำลังคำนวณ...',
-      wanGerdIndex: new Date().getDay(),
-    },
-    auspiciousness: {
-      overallScore: 0,
-      level: 'NEUTRAL',
-      factors: [],
-    },
-    brief: null,
-  };
-}
+export const useDailyData = () => {
+  const {user, preferences} = useUserStore();
 
-// ─────────────────────────────────────────────
-// Hook
-// ─────────────────────────────────────────────
-export function useDailyData(date?: Date) {
-  const targetDate = date ?? new Date();
-  const dateStr = DateTime.fromJSDate(targetDate)
-    .setZone(BANGKOK_TIMEZONE)
-    .toISODate() ?? '';
+  return useQuery<DailyData>({
+    queryKey: ['dailyData', todayKey()],
 
-  return useQuery({
-    queryKey: dailyDataKeys.forDate(dateStr),
-    queryFn: () => fetchDailyData(targetDate),
-    staleTime: CACHE_TTL_MS,
-    gcTime: CACHE_TTL_MS * 2,
+    queryFn: async (): Promise<DailyData> => {
+      const lat = user?.birthLat ?? 13.7563;   // Default: Bangkok
+      const lng = user?.birthLng ?? 100.5018;
+      const lang = user?.language ?? preferences.language ?? 'th';
+
+      // ── STEP 1: Astronomical computation ──────────────────────────
+      const astroData = await AstronomicalEngine.computeDailyData(
+        new Date(),
+        lat,
+        lng,
+        user?.natalChart,
+      );
+
+      // ── STEP 2: Thai rules interpretation ─────────────────────────
+      const ruleInput: RuleInputData = {
+        planets:          astroData.planets,
+        transits:         astroData.natalTransits ?? [],
+        lunarPhase:       astroData.lunarPhase,
+        currentHora:      astroData.currentHora,
+        thaiDate:         astroData.thaiDate,
+        wanGerd:          user?.wanGerd         ?? new Date().getDay(),
+        birthRasi:        user?.birthRasi        ?? 0,
+        birthNakshatra:   user?.birthNakshatra   ?? 0,
+        horaHours:        astroData.horaHours    ?? [],
+      };
+      const interpretation = ThaiRulesEngine.interpret(ruleInput);
+
+      // ── STEP 3: AI brief generation ────────────────────────────────
+      const brief = await InterpretationEngine.generateDailyBrief(
+        interpretation,
+        astroData,
+        lang,
+      );
+
+      return {
+        astroData,
+        interpretation,
+        brief,
+        // Convenience shortcuts
+        planets:     astroData.planets,
+        lunarPhase:  astroData.lunarPhase,
+        currentHora: astroData.currentHora,
+        thaiDate:    astroData.thaiDate,
+      };
+    },
+
+    staleTime:  1000 * 60 * 30,        // 30 minutes — re-fetch if stale
+    gcTime:     1000 * 60 * 60 * 6,    // 6 hours — keep in memory
+    retry:      2,
+    retryDelay: 1000,
   });
-}
+};
+
+// ─── SELECTOR HOOKS ───────────────────────────────────────────────
+
+export const useDailyBrief = () => {
+  const {data} = useDailyData();
+  return data?.brief ?? null;
+};
+
+export const useDailyInterpretation = () => {
+  const {data} = useDailyData();
+  return data?.interpretation ?? null;
+};
+
+export const useCurrentHora = () => {
+  const {data} = useDailyData();
+  return data?.currentHora ?? null;
+};
+
+export const useLunarPhase = () => {
+  const {data} = useDailyData();
+  return data?.lunarPhase ?? null;
+};
+
+export const useThaiDate = () => {
+  const {data} = useDailyData();
+  return data?.thaiDate ?? null;
+};

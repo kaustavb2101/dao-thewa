@@ -1,112 +1,138 @@
 /**
- * ดาวเทวา — User Profile Store
- * Zustand store for user birth data and preferences
- * Agent 2/3/5 will extend this as needed.
+ * ดาวเทวา — UserStore
+ * Zustand + AsyncStorage · Birth data + preferences · Online/offline persistence
  */
-
 import {create} from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
-export interface BirthData {
-  year: number;          // Gregorian year
-  month: number;         // 1–12
-  day: number;           // 1–31
-  hour: number;          // 0–23
-  minute: number;        // 0–59
-  latitude: number;      // birth location
-  longitude: number;
-  timezone: string;      // IANA timezone string e.g. 'Asia/Bangkok'
-}
+// ─── TYPES ────────────────────────────────────────────────────────
 
-export interface UserPreferences {
-  language: 'th' | 'en';
+export interface UserProfile {
+  id:                string;
+  birthDate:         Date;
+  birthTime:         string;      // HH:MM
+  birthLat:          number;
+  birthLng:          number;
+  birthTimezone:     string;
+  birthCity:         string;
+  wanGerd:           number;      // 0–6 (weekday of birth)
+  birthRasi:         number;      // 0–11 (Sun sign at birth)
+  birthNakshatra:    number;      // 0–26 (natal nakshatra)
+  natalChart?:       any;         // Full natal chart data
+  language:          'th' | 'en';
+  notificationHour:  number;      // 0–23
   notificationsEnabled: boolean;
-  dailyBriefTime: string;   // HH:MM in local time
-  isPremium: boolean;
+  isPremium:         boolean;
+  createdAt:         Date;
 }
 
-export interface UserState {
-  birthData: BirthData | null;
-  preferences: UserPreferences;
-  hasCompletedOnboarding: boolean;
-
-  // Actions
-  setBirthData: (data: BirthData) => Promise<void>;
-  setPreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
-  setOnboardingComplete: () => Promise<void>;
-  loadFromStorage: () => Promise<void>;
-  setPremium: (isPremium: boolean) => void;
+export interface Preferences {
+  language:          'th' | 'en';
+  notificationHour:  number;
+  notificationsEnabled: boolean;
+  theme:             'dark' | 'auto';
 }
 
-// ─────────────────────────────────────────────
-// Storage keys
-// ─────────────────────────────────────────────
-const STORAGE_KEYS = {
-  birthData: '@daothewa:birthData',
-  preferences: '@daothewa:preferences',
-  onboarding: '@daothewa:onboarding',
-} as const;
-
-// ─────────────────────────────────────────────
-// Default preferences
-// ─────────────────────────────────────────────
-const DEFAULT_PREFERENCES: UserPreferences = {
-  language: 'th',
+const DEFAULT_PREFERENCES: Preferences = {
+  language:             'th',
+  notificationHour:     7,
   notificationsEnabled: true,
-  dailyBriefTime: '06:00',
-  isPremium: false,
+  theme:                'dark',
 };
 
-// ─────────────────────────────────────────────
-// Store
-// ─────────────────────────────────────────────
+export interface UserState {
+  user:           UserProfile | null;
+  preferences:    Preferences;
+  isOnboarded:    boolean;
+  isPremium:      boolean;
+  // Actions
+  setUser:               (user: UserProfile) => Promise<void>;
+  updateBirthData:       (data: Partial<UserProfile>) => Promise<void>;
+  setPreferences:        (prefs: Partial<Preferences>) => Promise<void>;
+  setOnboardingComplete: () => void;
+  setPremium:            (isPremium: boolean) => Promise<void>;
+  loadFromStorage:       () => Promise<void>;
+  clearUser:             () => Promise<void>;
+  // DailyScheduler interface
+  getAllActiveUsers:      () => UserProfile[];
+}
+
+// ─── STORE ────────────────────────────────────────────────────────
+
 export const useUserStore = create<UserState>((set, get) => ({
-  birthData: null,
-  preferences: DEFAULT_PREFERENCES,
-  hasCompletedOnboarding: false,
 
-  setBirthData: async (data: BirthData) => {
-    set({birthData: data});
-    await AsyncStorage.setItem(STORAGE_KEYS.birthData, JSON.stringify(data));
+  user:         null,
+  preferences:  DEFAULT_PREFERENCES,
+  isOnboarded:  false,
+  isPremium:    false,
+
+  setUser: async (user: UserProfile) => {
+    set({user, isOnboarded: true});
+    await AsyncStorage.setItem('user_profile', JSON.stringify(user));
   },
 
-  setPreferences: async (prefs: Partial<UserPreferences>) => {
-    const updated = {...get().preferences, ...prefs};
+  updateBirthData: async (data: Partial<UserProfile>) => {
+    const current = get().user;
+    if (!current) return;
+    const updated = {...current, ...data};
+    set({user: updated});
+    await AsyncStorage.setItem('user_profile', JSON.stringify(updated));
+  },
+
+  setPreferences: async (prefs: Partial<Preferences>) => {
+    const current = get().preferences;
+    const updated = {...current, ...prefs};
     set({preferences: updated});
-    await AsyncStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify(updated));
+    await AsyncStorage.setItem('user_preferences', JSON.stringify(updated));
   },
 
-  setOnboardingComplete: async () => {
-    set({hasCompletedOnboarding: true});
-    await AsyncStorage.setItem(STORAGE_KEYS.onboarding, 'true');
+  setOnboardingComplete: () => {
+    set({isOnboarded: true});
+    AsyncStorage.setItem('onboarding_complete', 'true').catch(() => {});
+  },
+
+  setPremium: async (isPremium: boolean) => {
+    set({isPremium});
+    const user = get().user;
+    if (user) {
+      const updated = {...user, isPremium};
+      set({user: updated});
+      await AsyncStorage.setItem('user_profile', JSON.stringify(updated));
+    }
   },
 
   loadFromStorage: async () => {
     try {
-      const [birthRaw, prefsRaw, onboardingRaw] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEYS.birthData),
-        AsyncStorage.getItem(STORAGE_KEYS.preferences),
-        AsyncStorage.getItem(STORAGE_KEYS.onboarding),
+      const [profileJson, prefsJson, onboardedStr] = await Promise.all([
+        AsyncStorage.getItem('user_profile'),
+        AsyncStorage.getItem('user_preferences'),
+        AsyncStorage.getItem('onboarding_complete'),
       ]);
-
-      set({
-        birthData: birthRaw ? JSON.parse(birthRaw) : null,
-        preferences: prefsRaw
-          ? {...DEFAULT_PREFERENCES, ...JSON.parse(prefsRaw)}
-          : DEFAULT_PREFERENCES,
-        hasCompletedOnboarding: onboardingRaw === 'true',
-      });
-    } catch (error) {
-      console.error('[UserStore] Failed to load from storage:', error);
+      const updates: Partial<UserState> = {};
+      if (profileJson) updates.user = JSON.parse(profileJson) as UserProfile;
+      if (prefsJson)   updates.preferences = {...DEFAULT_PREFERENCES, ...JSON.parse(prefsJson)};
+      if (onboardedStr === 'true') updates.isOnboarded = true;
+      if (updates.user?.isPremium) updates.isPremium = true;
+      set(updates as UserState);
+    } catch (err) {
+      console.warn('[UserStore] Failed to load from storage:', err);
     }
   },
 
-  setPremium: (isPremium: boolean) => {
-    set(state => ({
-      preferences: {...state.preferences, isPremium},
-    }));
+  clearUser: async () => {
+    set({user: null, isOnboarded: false, isPremium: false});
+    await Promise.all([
+      AsyncStorage.removeItem('user_profile'),
+      AsyncStorage.removeItem('onboarding_complete'),
+    ]);
+  },
+
+  // Used by DailyScheduler to fetch users for batch processing
+  getAllActiveUsers: (): UserProfile[] => {
+    const {user} = get();
+    return user ? [user] : [];
   },
 }));
+
+// Module-level getter for use outside React components (DailyScheduler)
+export const getUserStore = () => useUserStore.getState();
