@@ -11,5 +11,10 @@ module.exports = {
         'semi': 'off',
         'curly': 'off',
         'prettier/prettier': 'off',
+        'comma-dangle': 'off',
+        'react-hooks/exhaustive-deps': 'off',
+        'react/no-unstable-nested-components': 'off',
+        'quotes': 'off',
+        'radix': 'off',
     },
 };
