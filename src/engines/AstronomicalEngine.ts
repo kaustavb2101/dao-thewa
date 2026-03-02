@@ -45,6 +45,7 @@ export interface HoraHour {
   isCurrent: boolean
   meaning: string
   meaningThai: string
+  symbol: string
 }
 
 export interface ThaiDate {
@@ -89,31 +90,48 @@ export interface Transit {
 
 export class AstronomicalEngine {
 
+  // ── AYANAMSA (Lahiri) ─────────────────────────────────────────────
+
+  /**
+   * Calculates the Lahiri Ayanamsa (precession of equinoxes) for a given date.
+   * Traditional Thai astrology uses a sidereal zodiac.
+   */
+  static getAyanamsa(date: Date): number {
+    const jd = Astronomy.MakeTime(date).ut + 2451545.0
+    const t = (jd - 2451545.0) / 36525
+    // Lahiri ayanamsa approximation
+    return (23.85 + (date.getFullYear() - 1950) * 0.0135) % 360
+  }
+
   // ── PLANET POSITIONS ──────────────────────────────────────────────
+
 
   static getAllPlanetPositions(date: Date, lat: number, lng: number): PlanetPosition[] {
     const astroDate = Astronomy.MakeTime(date)
 
     const planets = [
-      { key: 'SURYA',   body: Astronomy.Body.Sun     },
-      { key: 'CHANDRA', body: Astronomy.Body.Moon    },
-      { key: 'MANGAL',  body: Astronomy.Body.Mars    },
-      { key: 'BUDHA',   body: Astronomy.Body.Mercury },
-      { key: 'GURU',    body: Astronomy.Body.Jupiter },
-      { key: 'SHUKRA',  body: Astronomy.Body.Venus   },
-      { key: 'SHANI',   body: Astronomy.Body.Saturn  },
+      { key: 'SURYA', body: Astronomy.Body.Sun },
+      { key: 'CHANDRA', body: Astronomy.Body.Moon },
+      { key: 'MANGAL', body: Astronomy.Body.Mars },
+      { key: 'BUDHA', body: Astronomy.Body.Mercury },
+      { key: 'GURU', body: Astronomy.Body.Jupiter },
+      { key: 'SHUKRA', body: Astronomy.Body.Venus },
+      { key: 'SHANI', body: Astronomy.Body.Saturn },
     ]
 
-    return planets.map(({ key, body }) => {
-      const longitude = body === Astronomy.Body.Moon
+    const ayanamsa = this.getAyanamsa(date)
+
+    const basePlanets = planets.map(({ key, body }) => {
+      let tropicalLon = body === Astronomy.Body.Moon
         ? Astronomy.EclipticGeoMoon(astroDate).lon
         : this.getEclipticLongitude(body, astroDate)
 
+      const longitude = (tropicalLon - ayanamsa + 360) % 360
       const speed = this.getPlanetSpeed(body, date)
       const rasi = Math.floor(longitude / 30)
       const rasiDegree = longitude % 30
-      const nakshatraIndex = Math.floor(longitude / (360/27))
-      const nakshatraPada = Math.floor((longitude % (360/27)) / (360/27/4)) + 1
+      const nakshatraIndex = Math.floor(longitude / (360 / 27))
+      const nakshatraPada = Math.floor((longitude % (360 / 27)) / (360 / 27 / 4)) + 1
       const graha = NAVA_GRAHA[key as keyof typeof NAVA_GRAHA]
 
       return {
@@ -132,6 +150,46 @@ export class AstronomicalEngine {
         symbol: graha.symbol,
       }
     })
+
+    // Add Rahu and Ketu
+    const nodes = this.getLunarNodes(date)
+    const rahuLon = (nodes.rahu - ayanamsa + 360) % 360
+    const ketuLon = (nodes.ketu - ayanamsa + 360) % 360
+
+    const rahu: PlanetPosition = {
+      planet: 'RAHU',
+      longitude: rahuLon,
+      latitude: 0,
+      distance: 1,
+      speed: -0.05, // Average node speed
+      rasi: Math.floor(rahuLon / 30),
+      rasiDegree: rahuLon % 30,
+      nakshatra: Math.floor(rahuLon / (360 / 27)),
+      nakshatraPada: Math.floor((rahuLon % (360 / 27)) / (360 / 27 / 4)) + 1,
+      isRetrograde: true,
+      nameThai: NAVA_GRAHA.RAHU.nameThai,
+      nameEn: NAVA_GRAHA.RAHU.nameEn,
+      symbol: NAVA_GRAHA.RAHU.symbol,
+    }
+
+    const ketu: PlanetPosition = {
+      planet: 'KETU',
+      longitude: ketuLon,
+      latitude: 0,
+      distance: 1,
+      speed: -0.05,
+      rasi: Math.floor(ketuLon / 30),
+      rasiDegree: ketuLon % 30,
+      nakshatra: Math.floor(ketuLon / (360 / 27)),
+      nakshatraPada: Math.floor((ketuLon % (360 / 27)) / (360 / 27 / 4)) + 1,
+      isRetrograde: true,
+      nameThai: NAVA_GRAHA.KETU.nameThai,
+      nameEn: NAVA_GRAHA.KETU.nameEn,
+      symbol: NAVA_GRAHA.KETU.symbol,
+    }
+
+    return [...basePlanets, rahu, ketu]
+
   }
 
   private static getEclipticLongitude(body: any, time: any): number {
@@ -174,14 +232,14 @@ export class AstronomicalEngine {
     const phase = Astronomy.MoonPhase(date) / 360 // normalize 0–1
 
     const thaiNames = [
-      { min: 0,    max: 0.033, name: 'จันทร์ดับ',     nameEn: 'New Moon',         waxing: true  },
-      { min: 0.033,max: 0.25,  name: 'ข้างขึ้นเสี้ยว',nameEn: 'Waxing Crescent',  waxing: true  },
-      { min: 0.25, max: 0.27,  name: 'ครึ่งดวง',      nameEn: 'First Quarter',    waxing: true  },
-      { min: 0.27, max: 0.5,   name: 'ข้างขึ้นนูน',   nameEn: 'Waxing Gibbous',   waxing: true  },
-      { min: 0.5,  max: 0.533, name: 'จันทร์เต็มดวง', nameEn: 'Full Moon',        waxing: false },
-      { min: 0.533,max: 0.75,  name: 'ข้างแรมนูน',    nameEn: 'Waning Gibbous',   waxing: false },
-      { min: 0.75, max: 0.77,  name: 'ครึ่งดวงแรม',   nameEn: 'Last Quarter',     waxing: false },
-      { min: 0.77, max: 1.0,   name: 'ข้างแรมเสี้ยว', nameEn: 'Waning Crescent',  waxing: false },
+      { min: 0, max: 0.033, name: 'จันทร์ดับ', nameEn: 'New Moon', waxing: true },
+      { min: 0.033, max: 0.25, name: 'ข้างขึ้นเสี้ยว', nameEn: 'Waxing Crescent', waxing: true },
+      { min: 0.25, max: 0.27, name: 'ครึ่งดวง', nameEn: 'First Quarter', waxing: true },
+      { min: 0.27, max: 0.5, name: 'ข้างขึ้นนูน', nameEn: 'Waxing Gibbous', waxing: true },
+      { min: 0.5, max: 0.533, name: 'จันทร์เต็มดวง', nameEn: 'Full Moon', waxing: false },
+      { min: 0.533, max: 0.75, name: 'ข้างแรมนูน', nameEn: 'Waning Gibbous', waxing: false },
+      { min: 0.75, max: 0.77, name: 'ครึ่งดวงแรม', nameEn: 'Last Quarter', waxing: false },
+      { min: 0.77, max: 1.0, name: 'ข้างแรมเสี้ยว', nameEn: 'Waning Crescent', waxing: false },
     ]
 
     const current = thaiNames.find(n => phase >= n.min && phase < n.max) || thaiNames[0]
@@ -191,7 +249,7 @@ export class AstronomicalEngine {
       : Math.round((phase - 0.5) * 30) + 1
 
     const nextFull = Astronomy.SearchMoonPhase(180, date, 40)
-    const nextNew  = Astronomy.SearchMoonPhase(0,   date, 40)
+    const nextNew = Astronomy.SearchMoonPhase(0, date, 40)
 
     return {
       phase,
@@ -201,7 +259,7 @@ export class AstronomicalEngine {
       thaiLunarDay,
       isWaxing,
       nextFullMoon: nextFull ? nextFull.date : new Date(),
-      nextNewMoon:  nextNew  ? nextNew.date  : new Date(),
+      nextNewMoon: nextNew ? nextNew.date : new Date(),
     }
   }
 
@@ -209,10 +267,10 @@ export class AstronomicalEngine {
 
   static getHoraHours(date: Date, lat: number, lng: number): HoraHour[] {
     const sunrise = this.getSunrise(date, lat, lng)
-    const sunset  = this.getSunset(date, lat, lng)
+    const sunset = this.getSunset(date, lat, lng)
     const nextSunrise = this.getSunrise(new Date(date.getTime() + 86400000), lat, lng)
 
-    const dayDuration  = (sunset.getTime() - sunrise.getTime()) / 12
+    const dayDuration = (sunset.getTime() - sunrise.getTime()) / 12
     const nightDuration = (nextSunrise.getTime() - sunset.getTime()) / 12
 
     // Day ruler index based on weekday
@@ -230,13 +288,13 @@ export class AstronomicalEngine {
     const now = new Date()
 
     const horaMeanings: Record<string, { en: string; thai: string }> = {
-      SURYA:   { en: 'Leadership & vitality', thai: 'ผู้นำและความมีชีวิตชีวา' },
-      CHANDRA: { en: 'Intuition & emotion',   thai: 'สัญชาตญาณและอารมณ์' },
-      MANGAL:  { en: 'Courage & action',      thai: 'ความกล้าหาญและการลงมือทำ' },
-      BUDHA:   { en: 'Communication & trade', thai: 'การสื่อสารและการค้า' },
-      GURU:    { en: 'Luck & expansion',      thai: 'โชคลาภและความเจริญ' },
-      SHUKRA:  { en: 'Love & creativity',     thai: 'ความรักและความคิดสร้างสรรค์' },
-      SHANI:   { en: 'Discipline & karma',    thai: 'วินัยและกรรม' },
+      SURYA: { en: 'Leadership & vitality', thai: 'ผู้นำและความมีชีวิตชีวา' },
+      CHANDRA: { en: 'Intuition & emotion', thai: 'สัญชาตญาณและอารมณ์' },
+      MANGAL: { en: 'Courage & action', thai: 'ความกล้าหาญและการลงมือทำ' },
+      BUDHA: { en: 'Communication & trade', thai: 'การสื่อสารและการค้า' },
+      GURU: { en: 'Luck & expansion', thai: 'โชคลาภและความเจริญ' },
+      SHUKRA: { en: 'Love & creativity', thai: 'ความรักและความคิดสร้างสรรค์' },
+      SHANI: { en: 'Discipline & karma', thai: 'วินัยและกรรม' },
     }
 
     // Generate 24 hora hours (12 day + 12 night)
@@ -248,7 +306,7 @@ export class AstronomicalEngine {
       const offset = isDay ? i : (i - 12)
 
       const startTime = new Date(baseTime.getTime() + offset * duration)
-      const endTime   = new Date(startTime.getTime() + duration)
+      const endTime = new Date(startTime.getTime() + duration)
       const graha = NAVA_GRAHA[planetKey as keyof typeof NAVA_GRAHA]
       const meanings = horaMeanings[planetKey]
 
@@ -260,6 +318,7 @@ export class AstronomicalEngine {
         isCurrent: now >= startTime && now < endTime,
         meaning: meanings.en,
         meaningThai: meanings.thai,
+        symbol: graha.symbol,
       })
     }
 
@@ -295,27 +354,30 @@ export class AstronomicalEngine {
     const buddhistYear = dt.year + BUDDHIST_ERA_OFFSET
 
     const thaiMonths = [
-      'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน',
-      'พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม',
-      'กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน',
+      'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม',
+      'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
     ]
 
     const thaiDayNames = [
-      { en: 'Sunday',    thai: 'วันอาทิตย์' },
-      { en: 'Monday',    thai: 'วันจันทร์'  },
-      { en: 'Tuesday',   thai: 'วันอังคาร'  },
-      { en: 'Wednesday', thai: 'วันพุธ'     },
-      { en: 'Thursday',  thai: 'วันพฤหัสบดี'},
-      { en: 'Friday',    thai: 'วันศุกร์'   },
-      { en: 'Saturday',  thai: 'วันเสาร์'   },
+      { en: 'Sunday', thai: 'วันอาทิตย์' },
+      { en: 'Monday', thai: 'วันจันทร์' },
+      { en: 'Tuesday', thai: 'วันอังคาร' },
+      { en: 'Wednesday', thai: 'วันพุธ' },
+      { en: 'Thursday', thai: 'วันพฤหัสบดี' },
+      { en: 'Friday', thai: 'วันศุกร์' },
+      { en: 'Saturday', thai: 'วันเสาร์' },
     ]
 
     const wan = dt.weekday % 7
     const dayInfo = thaiDayNames[wan]
 
-    // Thai auspicious days (simplified — full system in RulesEngine)
-    const inauspiciousDays = [wan === 2 && dt.day % 7 === 0] // example rule
-    const isAuspicious = !inauspiciousDays.some(Boolean)
+    // Traditional Thai Auspicious Day Logic (Simplified)
+    // Wan Thong Chai (Victory Day) - varies by year, but simplified for now
+    const thongChaiDays = [2, 4, 6] // Example: Tue, Thu, Sat
+    const inauspiciousDays = [0, 1] // Example: Sun, Mon for some activities
+
+    const isAuspicious = thongChaiDays.includes(wan) && !inauspiciousDays.includes(wan)
 
     return {
       buddhistYear,
@@ -326,7 +388,7 @@ export class AstronomicalEngine {
       wanName: dayInfo.en,
       wanNameThai: dayInfo.thai,
       isAuspicious,
-      auspiciousReason: isAuspicious ? 'ฤกษ์ดี' : 'ควรระวัง',
+      auspiciousReason: isAuspicious ? 'วันธงชัย (ฤกษ์ดี)' : 'ควรใช้ความระมัดระวัง',
     }
   }
 
@@ -343,11 +405,11 @@ export class AstronomicalEngine {
 
     const transits: Transit[] = []
     const aspects = [
-      { name: 'conjunction', degrees: 0,   orb: 8, quality: 'variable' },
-      { name: 'sextile',     degrees: 60,  orb: 6, quality: 'benefic'  },
-      { name: 'square',      degrees: 90,  orb: 8, quality: 'malefic'  },
-      { name: 'trine',       degrees: 120, orb: 8, quality: 'benefic'  },
-      { name: 'opposition',  degrees: 180, orb: 8, quality: 'malefic'  },
+      { name: 'conjunction', degrees: 0, orb: 8, quality: 'variable' },
+      { name: 'sextile', degrees: 60, orb: 6, quality: 'benefic' },
+      { name: 'square', degrees: 90, orb: 8, quality: 'malefic' },
+      { name: 'trine', degrees: 120, orb: 8, quality: 'benefic' },
+      { name: 'opposition', degrees: 180, orb: 8, quality: 'malefic' },
     ]
 
     for (const transit of currentPlanets) {
@@ -388,13 +450,13 @@ export class AstronomicalEngine {
     const beneficAspects = ['trine', 'sextile']
     const isBenefic = beneficAspects.includes(aspect)
     const keywords: Record<string, string[]> = {
-      SURYA:   isBenefic ? ['ความสำเร็จ','ชื่อเสียง','อำนาจ']    : ['ความตึงเครียด','อีโก้','ความขัดแย้ง'],
-      CHANDRA: isBenefic ? ['สัญชาตญาณ','ความสุข','ครอบครัว']   : ['อารมณ์แปรปรวน','ความไม่มั่นคง'],
-      MANGAL:  isBenefic ? ['พลังงาน','ความกล้า','ความกระตือรือร้น'] : ['ความโกรธ','อุบัติเหตุ','ความรีบร้อน'],
-      BUDHA:   isBenefic ? ['การสื่อสาร','สัญญา','การค้า']       : ['ความสับสน','การเข้าใจผิด'],
-      GURU:    isBenefic ? ['โชคลาภ','การเติบโต','ปัญญา']        : ['การสูญเสีย','การขยายที่มากเกินไป'],
-      SHUKRA:  isBenefic ? ['ความรัก','ความงาม','ความสุข']       : ['ความสัมพันธ์ที่ยากลำบาก'],
-      SHANI:   isBenefic ? ['วินัย','ความทนทาน','ความสำเร็จระยะยาว'] : ['การล่าช้า','ข้อจำกัด','กรรม'],
+      SURYA: isBenefic ? ['ความสำเร็จ', 'ชื่อเสียง', 'อำนาจ'] : ['ความตึงเครียด', 'อีโก้', 'ความขัดแย้ง'],
+      CHANDRA: isBenefic ? ['สัญชาตญาณ', 'ความสุข', 'ครอบครัว'] : ['อารมณ์แปรปรวน', 'ความไม่มั่นคง'],
+      MANGAL: isBenefic ? ['พลังงาน', 'ความกล้า', 'ความกระตือรือร้น'] : ['ความโกรธ', 'อุบัติเหตุ', 'ความรีบร้อน'],
+      BUDHA: isBenefic ? ['การสื่อสาร', 'สัญญา', 'การค้า'] : ['ความสับสน', 'การเข้าใจผิด'],
+      GURU: isBenefic ? ['โชคลาภ', 'การเติบโต', 'ปัญญา'] : ['การสูญเสีย', 'การขยายที่มากเกินไป'],
+      SHUKRA: isBenefic ? ['ความรัก', 'ความงาม', 'ความสุข'] : ['ความสัมพันธ์ที่ยากลำบาก'],
+      SHANI: isBenefic ? ['วินัย', 'ความทนทาน', 'ความสำเร็จระยะยาว'] : ['การล่าช้า', 'ข้อจำกัด', 'กรรม'],
     }
     return keywords[t] || ['การเปลี่ยนแปลง']
   }
@@ -403,13 +465,13 @@ export class AstronomicalEngine {
     const beneficAspects = ['trine', 'sextile']
     const isBenefic = beneficAspects.includes(aspect)
     const keywords: Record<string, string[]> = {
-      SURYA:   isBenefic ? ['success','recognition','authority']    : ['tension','ego','conflict'],
-      CHANDRA: isBenefic ? ['intuition','happiness','family']       : ['moodiness','insecurity'],
-      MANGAL:  isBenefic ? ['energy','courage','drive']             : ['anger','accidents','haste'],
-      BUDHA:   isBenefic ? ['communication','contracts','commerce'] : ['confusion','misunderstanding'],
-      GURU:    isBenefic ? ['luck','growth','wisdom']               : ['loss','overexpansion'],
-      SHUKRA:  isBenefic ? ['love','beauty','pleasure']             : ['relationship struggles'],
-      SHANI:   isBenefic ? ['discipline','endurance','achievement'] : ['delays','restrictions','karma'],
+      SURYA: isBenefic ? ['success', 'recognition', 'authority'] : ['tension', 'ego', 'conflict'],
+      CHANDRA: isBenefic ? ['intuition', 'happiness', 'family'] : ['moodiness', 'insecurity'],
+      MANGAL: isBenefic ? ['energy', 'courage', 'drive'] : ['anger', 'accidents', 'haste'],
+      BUDHA: isBenefic ? ['communication', 'contracts', 'commerce'] : ['confusion', 'misunderstanding'],
+      GURU: isBenefic ? ['luck', 'growth', 'wisdom'] : ['loss', 'overexpansion'],
+      SHUKRA: isBenefic ? ['love', 'beauty', 'pleasure'] : ['relationship struggles'],
+      SHANI: isBenefic ? ['discipline', 'endurance', 'achievement'] : ['delays', 'restrictions', 'karma'],
     }
     return keywords[t] || ['change']
   }
@@ -422,13 +484,13 @@ export class AstronomicalEngine {
     lng: number,
     natalChart?: NatalChart
   ): Promise<DailyAstroData> {
-    const planets      = this.getAllPlanetPositions(date, lat, lng)
-    const lunarPhase   = this.getLunarPhase(date)
-    const horaHours    = this.getHoraHours(date, lat, lng)
-    const currentHora  = horaHours.find(h => h.isCurrent) || horaHours[0]
-    const thaiDate     = this.getThaiDate(date)
-    const sunriseTime  = this.getSunrise(date, lat, lng)
-    const sunsetTime   = this.getSunset(date, lat, lng)
+    const planets = this.getAllPlanetPositions(date, lat, lng)
+    const lunarPhase = this.getLunarPhase(date)
+    const horaHours = this.getHoraHours(date, lat, lng)
+    const currentHora = horaHours.find(h => h.isCurrent) || horaHours[0]
+    const thaiDate = this.getThaiDate(date)
+    const sunriseTime = this.getSunrise(date, lat, lng)
+    const sunsetTime = this.getSunset(date, lat, lng)
     const natalTransits = natalChart
       ? this.calculateTransits(planets, natalChart)
       : []

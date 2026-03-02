@@ -10,6 +10,7 @@ describe('ThaiRulesEngine', () => {
     isCurrent: true,
     meaning: 'Luck & expansion',
     meaningThai: 'โชคลาภและความเจริญ',
+    symbol: '♃',
   }
 
   const mockLunarPhase = {
@@ -62,6 +63,7 @@ describe('ThaiRulesEngine', () => {
     wanGerd: 5,
     birthRasi: 1,
     birthNakshatra: 3,
+    horaHours: [mockHora],
   }
 
   test('interpret() returns a valid DailyInterpretation', () => {

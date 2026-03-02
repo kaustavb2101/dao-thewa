@@ -1,19 +1,53 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
+    "esModuleInterop": true,
+    "jsx": "react-native",
+    "lib": [
+      "es2017"
+    ],
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
     "paths": {
-      "@config/*": ["config/*"],
-      "@screens/*": ["src/screens/*"],
-      "@components/*": ["src/components/*"],
-      "@engines/*": ["src/engines/*"],
-      "@api/*": ["src/api/*"],
-      "@stores/*": ["src/stores/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@navigation/*": ["src/navigation/*"],
-      "@theme/*": ["src/theme/*"]
+      "@config/*": [
+        "config/*"
+      ],
+      "@screens/*": [
+        "src/screens/*"
+      ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@engines/*": [
+        "src/engines/*"
+      ],
+      "@api/*": [
+        "src/api/*"
+      ],
+      "@stores/*": [
+        "src/stores/*"
+      ],
+      "@hooks/*": [
+        "src/hooks/*"
+      ],
+      "@navigation/*": [
+        "src/navigation/*"
+      ],
+      "@theme/*": [
+        "src/theme/*"
+      ]
     }
   },
-  "include": ["src", "config", "index.js", "tests"]
+  "include": [
+    "src",
+    "config",
+    "index.js",
+    "tests"
+  ]
 }

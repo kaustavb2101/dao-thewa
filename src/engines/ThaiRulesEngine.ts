@@ -5,10 +5,10 @@ import { NAVA_GRAHA, THAI_RASI, WAN_GERD_DEITIES } from '../../config/constants'
 // ─── RULE TYPES ───────────────────────────────────────────────────
 
 export type RuleCategory =
-  | 'career'        | 'love'        | 'health'
-  | 'wealth'        | 'travel'      | 'family'
-  | 'spirituality'  | 'creativity'  | 'caution'
-  | 'auspicious'    | 'inauspicious'
+  | 'career' | 'love' | 'health'
+  | 'wealth' | 'travel' | 'family'
+  | 'spirituality' | 'creativity' | 'caution'
+  | 'auspicious' | 'inauspicious'
 
 export type IntensityLevel = 1 | 2 | 3 | 4 | 5
 
@@ -378,6 +378,25 @@ export class ThaiRulesEngine {
       luckyNumber: 11,
       avoidThai: 'หลีกเลี่ยงพิธีกรรมสำคัญและการเริ่มต้นโปรเจกต์ใหม่',
     },
+
+    // ══════════════════════════════════════════
+    // WAN THONG CHAI (VICTORY DAY)
+    // ══════════════════════════════════════════
+    {
+      id: 'WAN_THONG_CHAI',
+      condition: (d) => d.thaiDate.isAuspicious,
+      category: 'auspicious',
+      intensity: 4,
+      titleThai: 'วันธงชัย — วันแห่งชัยชนะ',
+      titleEn: 'Wan Thong Chai — Victory Day',
+      descriptionThai: 'เป็นวันที่เป็นมงคลที่สุดในรอบสัปดาห์ เหมาะสำหรับการประกอบพิธีมงคลและการเริ่มต้นใหม่',
+      descriptionEn: 'The most auspicious day of the week. Ideal for ceremonies and new beginnings.',
+      adviceThai: 'ลงมือทำแผนงานที่วางไว้ หรือทำบุญเพื่อเสริมสิริมงคล',
+      adviceEn: 'Execute your plans or perform merit-making for blessing.',
+      luckyColor: '#FFD700',
+      luckyNumber: 1,
+    }
+
   ]
 
   // ─── MAIN INTERPRETATION ENGINE ─────────────────────────────────
@@ -395,19 +414,19 @@ export class ThaiRulesEngine {
       : 3
 
     // Determine quality
-    const beneficCount   = activeRules.filter(r => r.category !== 'caution' && r.category !== 'inauspicious').length
-    const maleficCount   = activeRules.filter(r => r.category === 'caution' || r.category === 'inauspicious').length
-    const ratio          = beneficCount / (maleficCount + 1)
+    const beneficCount = activeRules.filter(r => r.category !== 'caution' && r.category !== 'inauspicious').length
+    const maleficCount = activeRules.filter(r => r.category === 'caution' || r.category === 'inauspicious').length
+    const ratio = beneficCount / (maleficCount + 1)
 
     const quality = ratio > 3
       ? { en: 'very auspicious' as const, thai: 'มงคลมาก' }
       : ratio > 1.5
-      ? { en: 'auspicious' as const, thai: 'มงคล' }
-      : ratio > 0.8
-      ? { en: 'neutral' as const, thai: 'ปกติ' }
-      : ratio > 0.4
-      ? { en: 'challenging' as const, thai: 'ท้าทาย' }
-      : { en: 'very challenging' as const, thai: 'ท้าทายมาก' }
+        ? { en: 'auspicious' as const, thai: 'มงคล' }
+        : ratio > 0.8
+          ? { en: 'neutral' as const, thai: 'ปกติ' }
+          : ratio > 0.4
+            ? { en: 'challenging' as const, thai: 'ท้าทาย' }
+            : { en: 'very challenging' as const, thai: 'ท้าทายมาก' }
 
     // Generate headline from strongest rule
     const strongest = [...activeRules].sort((a, b) => b.intensity - a.intensity)[0]
@@ -444,8 +463,11 @@ export class ThaiRulesEngine {
         numbers: luckyNumbers,
         directions: deity ? [deity.luckyDir] : [],
         gemstones: deity ? [deity.gemstone] : [],
-        auspiciousHours: [],
+        auspiciousHours: data.horaHours ? data.horaHours.filter(h => h.planet === 'GURU' || h.planet === 'SHUKRA').map(h =>
+          `${h.startTime.getHours()}:${String(h.startTime.getMinutes()).padStart(2, '0')}`
+        ) : [],
       },
+
       avoidances,
       rawDataForAI: {
         activeRuleCount: activeRules.length,

@@ -4,16 +4,17 @@
  * Root application component
  */
 
-import React, {useEffect, useState} from 'react';
-import {StatusBar, StyleSheet, View} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import React, { useEffect, useState } from 'react';
+import { StatusBar, StyleSheet, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import {TabNavigator} from './navigation/TabNavigator';
+import { TabNavigator } from './navigation/TabNavigator';
 import OnboardingScreen from './screens/OnboardingScreen';
-import {Colors} from './theme/colors';
-import {useUserStore} from './stores/userStore';
+import { Colors } from './theme/colors';
+import { useUserStore } from './stores/userStore';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // ─────────────────────────────────────────────
 // React Query Client
@@ -44,10 +45,10 @@ const DaoThewaTheme = {
     notification: Colors.gold.warm,
   },
   fonts: {
-    regular: {fontFamily: 'System', fontWeight: '400' as const},
-    medium: {fontFamily: 'System', fontWeight: '500' as const},
-    bold: {fontFamily: 'System', fontWeight: '700' as const},
-    heavy: {fontFamily: 'System', fontWeight: '900' as const},
+    regular: { fontFamily: 'System', fontWeight: '400' as const },
+    medium: { fontFamily: 'System', fontWeight: '500' as const },
+    bold: { fontFamily: 'System', fontWeight: '700' as const },
+    heavy: { fontFamily: 'System', fontWeight: '900' as const },
   },
 };
 
@@ -56,7 +57,7 @@ const DaoThewaTheme = {
 // then TabNavigator once user profile is saved.
 // ─────────────────────────────────────────────
 function AppContent(): React.JSX.Element {
-  const {isOnboarded, loadFromStorage} = useUserStore();
+  const { isOnboarded, loadFromStorage } = useUserStore();
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -70,7 +71,7 @@ function AppContent(): React.JSX.Element {
     return (
       <>
         <StatusBar barStyle="light-content" backgroundColor={Colors.bg.deep} />
-        <OnboardingScreen onComplete={() => {/* Zustand reactivity handles re-render */}} />
+        <OnboardingScreen onComplete={() => {/* Zustand reactivity handles re-render */ }} />
       </>
     );
   }
@@ -87,11 +88,13 @@ function AppContent(): React.JSX.Element {
 
 function App(): React.JSX.Element {
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AppContent />
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AppContent />
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
