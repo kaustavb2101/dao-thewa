@@ -178,6 +178,10 @@ export default function WatchFaceScreen() {
                 style={[S.themeChip, theme === t.key && S.themeChipActive,
                 theme === t.key && { borderColor: t.colors[2] }]}
                 onPress={() => setTheme(t.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: theme === t.key }}
+                accessibilityLabel={`เลือกธีม ${t.label}`}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <View style={[S.themeColor, { backgroundColor: t.colors[2] }]} />
                 <Text style={[S.themeLabel, theme === t.key && { color: t.colors[2] }]}>
@@ -227,7 +231,12 @@ export default function WatchFaceScreen() {
 
           {/* Send to Watch button */}
           <View style={S.sendWrap}>
-            <TouchableOpacity style={S.sendBtn} onPress={handleSendToWatch}>
+            <TouchableOpacity
+              style={S.sendBtn}
+              onPress={handleSendToWatch}
+              accessibilityRole="button"
+              accessibilityLabel="ส่งหน้าปัดไปยังสมาร์ทวอทช์"
+            >
               <Text style={S.sendIcon}>⌚</Text>
               <Text style={S.sendText}>
                 {sentToWatch ? 'ส่งแล้ว ✓' : 'ส่งไปนาฬิกา'}

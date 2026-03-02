@@ -42,7 +42,13 @@ export class ErrorBoundary extends Component<Props, State> {
                         <Text style={styles.errorText}>
                             {this.state.error?.message || 'Unknown Error'}
                         </Text>
-                        <TouchableOpacity style={styles.button} onPress={this.handleReset}>
+                        <TouchableOpacity
+                            style={styles.button}
+                            onPress={this.handleReset}
+                            accessibilityRole="button"
+                            accessibilityLabel="ลองใหม่อีกครั้ง"
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
                             <Text style={styles.buttonText}>ลองใหม่อีกครั้ง / Try Again</Text>
                         </TouchableOpacity>
                     </View>

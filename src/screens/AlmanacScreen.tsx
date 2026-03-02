@@ -316,6 +316,10 @@ export default function AlmanacScreen() {
               key={tab.key}
               style={[S.tab, activeTab === tab.key && S.tabActive]}
               onPress={() => setActiveTab(tab.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === tab.key }}
+              accessibilityLabel={`หมวดหมู่ ${tab.label}`}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Text style={[S.tabText, activeTab === tab.key && S.tabTextActive]}>
                 {tab.label}

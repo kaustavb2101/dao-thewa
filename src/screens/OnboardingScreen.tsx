@@ -87,11 +87,23 @@ function NumberPicker({
     <View style={NP.wrap}>
       <Text style={NP.label}>{label}</Text>
       <View style={NP.row}>
-        <TouchableOpacity style={NP.btn} onPress={() => onChange(Math.max(min, value - 1))}>
+        <TouchableOpacity
+          style={NP.btn}
+          onPress={() => onChange(Math.max(min, value - 1))}
+          accessibilityRole="button"
+          accessibilityLabel={`ลด ${label}`}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        >
           <Text style={NP.arrow}>‹</Text>
         </TouchableOpacity>
         <Text style={NP.val}>{String(value).padStart(2, '0')}</Text>
-        <TouchableOpacity style={NP.btn} onPress={() => onChange(Math.min(max, value + 1))}>
+        <TouchableOpacity
+          style={NP.btn}
+          onPress={() => onChange(Math.min(max, value + 1))}
+          accessibilityRole="button"
+          accessibilityLabel={`เพิ่ม ${label}`}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        >
           <Text style={NP.arrow}>›</Text>
         </TouchableOpacity>
       </View>
@@ -140,7 +152,12 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
           </View>
         ))}
       </View>
-      <TouchableOpacity style={S.primaryBtn} onPress={onNext}>
+      <TouchableOpacity
+        style={S.primaryBtn}
+        onPress={onNext}
+        accessibilityRole="button"
+        accessibilityLabel="เริ่มต้นการใช้งาน"
+      >
         <Text style={S.primaryBtnText}>เริ่มต้น →</Text>
       </TouchableOpacity>
       <Text style={S.privacy}>ข้อมูลของท่านเก็บไว้บนอุปกรณ์เท่านั้น</Text>
@@ -192,10 +209,20 @@ function StepDate({ onNext, onBack }: { onNext: (d: Date) => void; onBack: () =>
       </View>
 
       <View style={S.btnRow}>
-        <TouchableOpacity style={S.backBtn} onPress={onBack}>
+        <TouchableOpacity
+          style={S.backBtn}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="ย้อนกลับ"
+        >
           <Text style={S.backBtnText}>← กลับ</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={S.primaryBtn} onPress={() => onNext(new Date(year, month - 1, safeDay))}>
+        <TouchableOpacity
+          style={S.primaryBtn}
+          onPress={() => onNext(new Date(year, month - 1, safeDay))}
+          accessibilityRole="button"
+          accessibilityLabel="ดำเนินการต่อ"
+        >
           <Text style={S.primaryBtnText}>ถัดไป →</Text>
         </TouchableOpacity>
       </View>
@@ -232,6 +259,10 @@ function StepTime({ onNext, onBack }: { onNext: (h: number, m: number) => void; 
       <TouchableOpacity
         style={[S.unknownBtn, unknown && S.unknownBtnActive]}
         onPress={() => setUnknown(!unknown)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: unknown }}
+        accessibilityLabel="ไม่ทราบเวลาเกิด"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Text style={[S.unknownText, unknown && S.unknownTextActive]}>
           {unknown ? '✓ ไม่ทราบเวลาเกิด' : 'ไม่ทราบเวลาเกิด'}
@@ -239,10 +270,20 @@ function StepTime({ onNext, onBack }: { onNext: (h: number, m: number) => void; 
       </TouchableOpacity>
 
       <View style={S.btnRow}>
-        <TouchableOpacity style={S.backBtn} onPress={onBack}>
+        <TouchableOpacity
+          style={S.backBtn}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="ย้อนกลับ"
+        >
           <Text style={S.backBtnText}>← กลับ</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={S.primaryBtn} onPress={() => onNext(unknown ? 6 : hour, unknown ? 0 : min)}>
+        <TouchableOpacity
+          style={S.primaryBtn}
+          onPress={() => onNext(unknown ? 6 : hour, unknown ? 0 : min)}
+          accessibilityRole="button"
+          accessibilityLabel="ดำเนินการต่อ"
+        >
           <Text style={S.primaryBtnText}>ถัดไป →</Text>
         </TouchableOpacity>
       </View>
@@ -271,6 +312,10 @@ function StepLocation({
             key={i}
             style={[S.cityChip, selected === i && S.cityChipActive]}
             onPress={() => setSelected(i)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: selected === i }}
+            accessibilityLabel={`ประสูติที่ ${city.name}`}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Text style={[S.cityName, selected === i && S.cityNameActive]}>{city.name}</Text>
             <Text style={S.cityEn}>{city.nameEn}</Text>
@@ -285,7 +330,12 @@ function StepLocation({
       </View>
 
       <View style={S.btnRow}>
-        <TouchableOpacity style={S.backBtn} onPress={onBack}>
+        <TouchableOpacity
+          style={S.backBtn}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="ย้อนกลับ"
+        >
           <Text style={S.backBtnText}>← กลับ</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -295,6 +345,8 @@ function StepLocation({
             THAI_CITIES[selected].lng,
             THAI_CITIES[selected].name,
           )}
+          accessibilityRole="button"
+          accessibilityLabel="ดำเนินการต่อ"
         >
           <Text style={S.primaryBtnText}>ถัดไป →</Text>
         </TouchableOpacity>
@@ -361,7 +413,12 @@ function StepReady({
         </View>
       </View>
 
-      <TouchableOpacity style={[S.primaryBtn, S.finishBtn]} onPress={onFinish}>
+      <TouchableOpacity
+        style={[S.primaryBtn, S.finishBtn]}
+        onPress={onFinish}
+        accessibilityRole="button"
+        accessibilityLabel="เข้าสู่ดาวเทวา"
+      >
         <Text style={S.primaryBtnText}>เข้าสู่ดาวเทวา ✦</Text>
       </TouchableOpacity>
     </View>

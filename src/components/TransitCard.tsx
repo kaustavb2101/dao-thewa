@@ -3,7 +3,7 @@
  * Individual transit/rule interpretation card
  * Color-coded: gold=auspicious, teal=neutral, red=caution
  */
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,29 +11,29 @@ import {
   StyleSheet,
   LayoutAnimation,
 } from 'react-native';
-import {Colors} from '../theme/colors';
-import {IntensityBar} from './IntensityBar';
-import type {InterpretationRule} from '../engines/ThaiRulesEngine';
+import { Colors } from '../theme/colors';
+import { IntensityBar } from './IntensityBar';
+import type { InterpretationRule } from '../engines/ThaiRulesEngine';
 
 interface Props {
   rule: InterpretationRule;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  career:       Colors.gold.bright,
-  wealth:       '#FFD700',
-  love:         '#FF69B4',
-  health:       '#81C784',
-  travel:       '#4FC3F7',
-  family:       '#FFB74D',
+  career: Colors.gold.bright,
+  wealth: '#FFD700',
+  love: '#FF69B4',
+  health: '#81C784',
+  travel: '#4FC3F7',
+  family: '#FFB74D',
   spirituality: '#CE93D8',
-  creativity:   '#80CBC4',
-  auspicious:   Colors.gold.bright,
+  creativity: '#80CBC4',
+  auspicious: Colors.gold.bright,
   inauspicious: Colors.danger,
-  caution:      Colors.warning,
+  caution: Colors.warning,
 };
 
-export function TransitCard({rule}: Props) {
+export function TransitCard({ rule }: Props) {
   const [expanded, setExpanded] = useState(false);
   const accentColor = CATEGORY_COLORS[rule.category] ?? Colors.gold.warm;
 
@@ -45,11 +45,14 @@ export function TransitCard({rule}: Props) {
   return (
     <TouchableOpacity
       onPress={toggleExpand}
-      style={[styles.card, {borderLeftColor: accentColor}]}
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+      accessibilityLabel={`รายละเอียดคำทำนาย: ${rule.titleThai}`}
+      style={[styles.card, { borderLeftColor: accentColor }]}
       activeOpacity={0.85}>
       {/* Header row */}
       <View style={styles.header}>
-        <Text style={[styles.title, {color: accentColor}]} numberOfLines={1}>
+        <Text style={[styles.title, { color: accentColor }]} numberOfLines={1}>
           {rule.titleThai}
         </Text>
         <IntensityBar intensity={rule.intensity} color={accentColor} />
@@ -68,13 +71,13 @@ export function TransitCard({rule}: Props) {
           </View>
           {rule.avoidThai && (
             <View style={[styles.adviceRow, styles.avoidRow]}>
-              <Text style={[styles.adviceLabel, {color: Colors.danger}]}>หลีกเลี่ยง</Text>
-              <Text style={[styles.adviceText, {color: Colors.danger}]}>{rule.avoidThai}</Text>
+              <Text style={[styles.adviceLabel, { color: Colors.danger }]}>หลีกเลี่ยง</Text>
+              <Text style={[styles.adviceText, { color: Colors.danger }]}>{rule.avoidThai}</Text>
             </View>
           )}
           {rule.luckyColor && (
             <View style={styles.luckyRow}>
-              <View style={[styles.colorDot, {backgroundColor: rule.luckyColor}]} />
+              <View style={[styles.colorDot, { backgroundColor: rule.luckyColor }]} />
               <Text style={styles.luckyText}>สีมงคล</Text>
               {rule.luckyNumber !== undefined && (
                 <Text style={styles.luckyText}>  เลขมงคล {rule.luckyNumber}</Text>

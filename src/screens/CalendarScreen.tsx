@@ -245,6 +245,10 @@ export default function CalendarScreen() {
                   key={i}
                   style={[S.monthChip, isSelected && S.monthChipActive]}
                   onPress={() => setSelectedMonth(i)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={`เดือน ${m}`}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Text style={[S.monthText, isSelected && S.monthTextActive]}>{m}</Text>
                   {hasEvents && <View style={[S.dot, isSelected && S.dotActive]} />}
