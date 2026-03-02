@@ -17,24 +17,16 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: DaoThewa/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install Dependencies
-        run: |
-          cd DaoThewa
-          npm install --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
       - name: Run Lint
-        run: |
-          cd DaoThewa
-          npm run lint
+        run: npm run lint
 
       - name: Run Type Check
-        run: |
-          cd DaoThewa
-          npm run type-check
+        run: npm run type-check
 
       - name: Run Tests
-        run: |
-          cd DaoThewa
-          npm test
+        run: npm test
