@@ -3,20 +3,20 @@
  * Palm-leaf manuscript cards · Thai astrological knowledge base
  * Yantra SVG · Nakshatra table · Historical Thai periods
  */
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, {
   Circle, Line, Polygon, Text as SvgText, G, Rect,
 } from 'react-native-svg';
-import {GoldDivider} from '../components/GoldDivider';
-import {Colors} from '../theme/colors';
-import {NAVA_GRAHA, THAI_RASI, NAKSHATRAS, WAN_GERD_DEITIES} from '../../config/constants';
+import { GoldDivider } from '../components/GoldDivider';
+import { Colors } from '../theme/colors';
+import { NAVA_GRAHA, THAI_RASI, NAKSHATRAS, WAN_GERD_DEITIES } from '../../config/constants';
 
-const {width} = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // ─── YANTRA SVG ───────────────────────────────────────────────────
 
@@ -24,22 +24,22 @@ const {width} = Dimensions.get('window');
  * Nava Graha Yantra — 3×3 magic square with planetary symbols
  * Traditional arrangement: Saturn center, planets at 8 directions
  */
-function NavaGrahaYantra({size = 200}: {size?: number}) {
+function NavaGrahaYantra({ size = 200 }: { size?: number }) {
   const cell = size / 3;
   const cx = size / 2;
   const cy = size / 2;
 
   // Nava Graha Yantra layout (traditional Thai placement)
   const YANTRA_GRID = [
-    ['MANGAL',  'RAHU',    'GURU'],
-    ['SHANI',   'SURYA',   'CHANDRA'],
-    ['BUDHA',   'KETU',    'SHUKRA'],
+    ['MANGAL', 'RAHU', 'GURU'],
+    ['SHANI', 'SURYA', 'CHANDRA'],
+    ['BUDHA', 'KETU', 'SHUKRA'],
   ];
 
   const YANTRA_BG = [
-    ['#1A0A30','#0D1530','#102808'],
-    ['#200808','#0A0B1E','#1A1008'],
-    ['#081830','#180820','#0A1820'],
+    ['#1A0A30', '#0D1530', '#102808'],
+    ['#200808', '#0A0B1E', '#1A1008'],
+    ['#081830', '#180820', '#0A1820'],
   ];
 
   return (
@@ -64,7 +64,7 @@ function NavaGrahaYantra({size = 200}: {size?: number}) {
               {/* Symbol */}
               <SvgText
                 x={x + cell / 2} y={y + cell / 2 - 6}
-                textAnchor="middle" dominantBaseline="middle"
+                textAnchor="middle"
                 fontSize={isCenter ? 20 : 16}
                 fill={isCenter ? Colors.gold.bright : graha?.color ?? '#C8A854'}
               >
@@ -73,7 +73,7 @@ function NavaGrahaYantra({size = 200}: {size?: number}) {
               {/* Thai name */}
               <SvgText
                 x={x + cell / 2} y={y + cell / 2 + 12}
-                textAnchor="middle" dominantBaseline="middle"
+                textAnchor="middle"
                 fontSize={7}
                 fill={isCenter ? Colors.gold.warm : 'rgba(200,168,84,0.6)'}
               >
@@ -96,11 +96,11 @@ function NavaGrahaYantra({size = 200}: {size?: number}) {
 // ─── TAB SYSTEM ───────────────────────────────────────────────────
 
 const TABS = [
-  {key: 'graha',    label: 'นวเคราะห์'},
-  {key: 'rasi',     label: 'จักรราศี'},
-  {key: 'nakshatra',label: 'นักษัตร'},
-  {key: 'wan',      label: 'วันเกิด'},
-  {key: 'yantra',   label: 'ยันต์'},
+  { key: 'graha', label: 'นวเคราะห์' },
+  { key: 'rasi', label: 'จักรราศี' },
+  { key: 'nakshatra', label: 'นักษัตร' },
+  { key: 'wan', label: 'วันเกิด' },
+  { key: 'yantra', label: 'ยันต์' },
 ];
 
 // ─── SECTION COMPONENTS ───────────────────────────────────────────
@@ -113,15 +113,15 @@ function GrahaSection() {
         const g = NAVA_GRAHA[k];
         return (
           <View key={k} style={Sec.card}>
-            <View style={[Sec.symbolBox, {backgroundColor: `${g.color}22`, borderColor: `${g.color}44`}]}>
-              <Text style={[Sec.symbol, {color: g.color}]}>{g.symbol}</Text>
+            <View style={[Sec.symbolBox, { backgroundColor: `${g.color}22`, borderColor: `${g.color}44` }]}>
+              <Text style={[Sec.symbol, { color: g.color }]}>{g.symbol}</Text>
             </View>
             <View style={Sec.info}>
               <Text style={Sec.nameThai}>{g.nameThai}</Text>
               <Text style={Sec.nameEn}>{g.nameEn ?? k}</Text>
-              <Text style={Sec.desc} numberOfLines={2}>{g.meaningThai ?? g.meaning ?? ''}</Text>
+              <Text style={Sec.desc} numberOfLines={2}>{(g as any).meaningThai ?? (g as any).meaning ?? ''}</Text>
             </View>
-            <View style={[Sec.colorBar, {backgroundColor: g.color}]} />
+            <View style={[Sec.colorBar, { backgroundColor: g.color }]} />
           </View>
         );
       })}
@@ -148,17 +148,17 @@ function NakshatraSection() {
   return (
     <View style={Sec.nakWrap}>
       <View style={Sec.nakHeader}>
-        <Text style={[Sec.nakCol, {flex: 0.5}]}>#</Text>
-        <Text style={[Sec.nakCol, {flex: 2}]}>นักษัตร</Text>
-        <Text style={[Sec.nakCol, {flex: 1.5}]}>เจ้าเรือน</Text>
-        <Text style={[Sec.nakCol, {flex: 1.5}]}>สัตว์</Text>
+        <Text style={[Sec.nakCol, { flex: 0.5 }]}>#</Text>
+        <Text style={[Sec.nakCol, { flex: 2 }]}>นักษัตร</Text>
+        <Text style={[Sec.nakCol, { flex: 1.5 }]}>เจ้าเรือน</Text>
+        <Text style={[Sec.nakCol, { flex: 1.5 }]}>สัตว์</Text>
       </View>
-      {NAKSHATRAS.map((n, i) => (
+      {NAKSHATRAS.map((n: any, i: number) => (
         <View key={i} style={[Sec.nakRow, i % 2 === 0 && Sec.nakRowAlt]}>
-          <Text style={[Sec.nakCell, {flex: 0.5}]}>{i + 1}</Text>
-          <Text style={[Sec.nakCell, {flex: 2, color: Colors.gold.warm}]}>{n.nameThai ?? n.name}</Text>
-          <Text style={[Sec.nakCell, {flex: 1.5}]}>{n.ruler ?? '—'}</Text>
-          <Text style={[Sec.nakCell, {flex: 1.5}]}>{n.symbol ?? '—'}</Text>
+          <Text style={[Sec.nakCell, { flex: 0.5 }]}>{i + 1}</Text>
+          <Text style={[Sec.nakCell, { flex: 2, color: Colors.gold.warm }]}>{n.nameThai ?? n.nameEn}</Text>
+          <Text style={[Sec.nakCell, { flex: 1.5 }]}>{n.ruler ?? '—'}</Text>
+          <Text style={[Sec.nakCell, { flex: 1.5 }]}>{(n as any).symbol ?? '—'}</Text>
         </View>
       ))}
     </View>
@@ -167,25 +167,27 @@ function NakshatraSection() {
 
 function WanGerdSection() {
   const days = Object.entries(WAN_GERD_DEITIES);
-  const DAY_NAMES = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'];
+  const DAY_NAMES = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
   return (
     <View style={Sec.wrap}>
       {days.map(([dayNum, deity]) => {
         const d = deity as any;
         return (
           <View key={dayNum} style={Sec.wanCard}>
-            <View style={[Sec.wanCircle, {backgroundColor: `${d.color ?? Colors.gold.bright}22`,
-              borderColor: d.color ?? Colors.gold.bright}]}>
+            <View style={[Sec.wanCircle, {
+              backgroundColor: `${d.color ?? Colors.gold.bright}22`,
+              borderColor: d.color ?? Colors.gold.bright
+            }]}>
               <Text style={Sec.wanDay}>{DAY_NAMES[Number(dayNum)] ?? ''}</Text>
             </View>
             <View style={Sec.wanInfo}>
-              <Text style={[Sec.wanDeity, {color: d.color ?? Colors.gold.bright}]}>
+              <Text style={[Sec.wanDeity, { color: d.color ?? Colors.gold.bright }]}>
                 {d.deityNameThai ?? d.nameThai ?? ''}
               </Text>
               <Text style={Sec.wanGem}>💎 {d.gemstone ?? ''}</Text>
               <Text style={Sec.wanDir}>🧭 {d.luckyDirection ?? d.luckyDir ?? ''}</Text>
             </View>
-            <View style={[Sec.wanSwatch, {backgroundColor: d.color ?? Colors.gold.bright}]} />
+            <View style={[Sec.wanSwatch, { backgroundColor: d.color ?? Colors.gold.bright }]} />
           </View>
         );
       })}
@@ -211,55 +213,71 @@ function YantraSection() {
 }
 
 const Sec = StyleSheet.create({
-  wrap:       {paddingVertical: 8},
-  card:       {flexDirection: 'row', alignItems: 'center', marginHorizontal: 16,
-               marginVertical: 4, backgroundColor: Colors.bg.dark,
-               borderRadius: 12, padding: 12, overflow: 'hidden'},
-  symbolBox:  {width: 44, height: 44, borderRadius: 22, alignItems: 'center',
-               justifyContent: 'center', borderWidth: 1, marginRight: 12},
-  symbol:     {fontSize: 22},
-  info:       {flex: 1},
-  nameThai:   {fontSize: 13, color: Colors.text.primary, fontWeight: '600'},
-  nameEn:     {fontSize: 9, color: Colors.text.muted, marginTop: 1},
-  desc:       {fontSize: 10, color: Colors.text.secondary, marginTop: 4, lineHeight: 14},
-  colorBar:   {width: 3, height: '100%', position: 'absolute', right: 0, borderRadius: 2},
+  wrap: { paddingVertical: 8 },
+  card: {
+    flexDirection: 'row', alignItems: 'center', marginHorizontal: 16,
+    marginVertical: 4, backgroundColor: Colors.bg.dark,
+    borderRadius: 12, padding: 12, overflow: 'hidden'
+  },
+  symbolBox: {
+    width: 44, height: 44, borderRadius: 22, alignItems: 'center',
+    justifyContent: 'center', borderWidth: 1, marginRight: 12
+  },
+  symbol: { fontSize: 22 },
+  info: { flex: 1 },
+  nameThai: { fontSize: 13, color: Colors.text.primary, fontWeight: '600' },
+  nameEn: { fontSize: 9, color: Colors.text.muted, marginTop: 1 },
+  desc: { fontSize: 10, color: Colors.text.secondary, marginTop: 4, lineHeight: 14 },
+  colorBar: { width: 3, height: '100%', position: 'absolute', right: 0, borderRadius: 2 },
   // Rasi grid
-  grid:       {flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, gap: 6, paddingVertical: 8},
-  rasiCard:   {width: (width - 40) / 4, backgroundColor: Colors.bg.dark, borderRadius: 10,
-               padding: 8, alignItems: 'center', borderWidth: 1,
-               borderColor: 'rgba(212,160,23,0.1)'},
-  rasiSym:    {fontSize: 20, marginBottom: 4},
-  rasiThai:   {fontSize: 8, color: Colors.gold.warm, textAlign: 'center'},
-  rasiEn:     {fontSize: 7, color: Colors.text.muted, textAlign: 'center'},
-  rasiEl:     {fontSize: 7, color: Colors.celestial.sky, marginTop: 2},
+  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, gap: 6, paddingVertical: 8 },
+  rasiCard: {
+    width: (width - 40) / 4, backgroundColor: Colors.bg.dark, borderRadius: 10,
+    padding: 8, alignItems: 'center', borderWidth: 1,
+    borderColor: 'rgba(212,160,23,0.1)'
+  },
+  rasiSym: { fontSize: 20, marginBottom: 4 },
+  rasiThai: { fontSize: 8, color: Colors.gold.warm, textAlign: 'center' },
+  rasiEn: { fontSize: 7, color: Colors.text.muted, textAlign: 'center' },
+  rasiEl: { fontSize: 7, color: Colors.celestial.sky, marginTop: 2 },
   // Nakshatra table
-  nakWrap:    {paddingHorizontal: 16, paddingVertical: 8},
-  nakHeader:  {flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1,
-               borderBottomColor: 'rgba(212,160,23,0.2)', marginBottom: 4},
-  nakCol:     {fontSize: 8, color: Colors.gold.warm, letterSpacing: 0.5, fontWeight: '600'},
-  nakRow:     {flexDirection: 'row', paddingVertical: 5},
-  nakRowAlt:  {backgroundColor: 'rgba(212,160,23,0.04)', borderRadius: 4},
-  nakCell:    {fontSize: 9, color: Colors.text.secondary},
+  nakWrap: { paddingHorizontal: 16, paddingVertical: 8 },
+  nakHeader: {
+    flexDirection: 'row', paddingVertical: 6, borderBottomWidth: 1,
+    borderBottomColor: 'rgba(212,160,23,0.2)', marginBottom: 4
+  },
+  nakCol: { fontSize: 8, color: Colors.gold.warm, letterSpacing: 0.5, fontWeight: '600' },
+  nakRow: { flexDirection: 'row', paddingVertical: 5 },
+  nakRowAlt: { backgroundColor: 'rgba(212,160,23,0.04)', borderRadius: 4 },
+  nakCell: { fontSize: 9, color: Colors.text.secondary },
   // Wan Gerd
-  wanCard:    {flexDirection: 'row', alignItems: 'center', marginHorizontal: 16,
-               marginVertical: 4, backgroundColor: Colors.bg.dark, borderRadius: 12,
-               padding: 12, overflow: 'hidden'},
-  wanCircle:  {width: 50, height: 50, borderRadius: 25, alignItems: 'center',
-               justifyContent: 'center', borderWidth: 1, marginRight: 12},
-  wanDay:     {fontSize: 9, color: Colors.text.primary, textAlign: 'center'},
-  wanInfo:    {flex: 1, gap: 3},
-  wanDeity:   {fontSize: 13, fontWeight: '600'},
-  wanGem:     {fontSize: 9, color: Colors.text.muted},
-  wanDir:     {fontSize: 9, color: Colors.text.muted},
-  wanSwatch:  {width: 3, height: '100%', position: 'absolute', right: 0, borderRadius: 2},
+  wanCard: {
+    flexDirection: 'row', alignItems: 'center', marginHorizontal: 16,
+    marginVertical: 4, backgroundColor: Colors.bg.dark, borderRadius: 12,
+    padding: 12, overflow: 'hidden'
+  },
+  wanCircle: {
+    width: 50, height: 50, borderRadius: 25, alignItems: 'center',
+    justifyContent: 'center', borderWidth: 1, marginRight: 12
+  },
+  wanDay: { fontSize: 9, color: Colors.text.primary, textAlign: 'center' },
+  wanInfo: { flex: 1, gap: 3 },
+  wanDeity: { fontSize: 13, fontWeight: '600' },
+  wanGem: { fontSize: 9, color: Colors.text.muted },
+  wanDir: { fontSize: 9, color: Colors.text.muted },
+  wanSwatch: { width: 3, height: '100%', position: 'absolute', right: 0, borderRadius: 2 },
   // Yantra
-  yantraWrap: {alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16},
-  yantraTitle:{fontSize: 16, color: Colors.gold.bright, fontWeight: '600', letterSpacing: 2},
-  yantraSub:  {fontSize: 9, color: Colors.text.muted, marginTop: 4, marginBottom: 16},
-  yantraBox:  {borderWidth: 1, borderColor: 'rgba(212,160,23,0.2)', borderRadius: 4,
-               padding: 4, backgroundColor: '#080912'},
-  yantraDesc: {fontSize: 11, color: Colors.text.secondary, textAlign: 'center',
-               marginTop: 16, lineHeight: 18},
+  yantraWrap: { alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16 },
+  yantraTitle: { fontSize: 16, color: Colors.gold.bright, fontWeight: '600', letterSpacing: 2 },
+  yantraSub: { fontSize: 9, color: Colors.text.muted, marginTop: 4, marginBottom: 16 },
+  yantraBox: {
+    borderWidth: 1, borderColor: 'rgba(212,160,23,0.2)', borderRadius: 4,
+    padding: 4, backgroundColor: '#080912'
+  },
+  yantraDesc: {
+    fontSize: 11, color: Colors.text.secondary, textAlign: 'center',
+    marginTop: 16, lineHeight: 18
+  },
 });
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────
@@ -269,17 +287,17 @@ export default function AlmanacScreen() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'graha':     return <GrahaSection />;
-      case 'rasi':      return <RasiSection />;
+      case 'graha': return <GrahaSection />;
+      case 'rasi': return <RasiSection />;
       case 'nakshatra': return <NakshatraSection />;
-      case 'wan':       return <WanGerdSection />;
-      case 'yantra':    return <YantraSection />;
-      default:          return null;
+      case 'wan': return <WanGerdSection />;
+      case 'yantra': return <YantraSection />;
+      default: return null;
     }
   };
 
   return (
-    <LinearGradient colors={['#0C0A18','#120E22','#0C0A18']} style={S.fill}>
+    <LinearGradient colors={['#0C0A18', '#120E22', '#0C0A18']} style={S.fill}>
       <SafeAreaView style={S.fill}>
         {/* Header */}
         <View style={S.header}>
@@ -311,7 +329,7 @@ export default function AlmanacScreen() {
         {/* Content */}
         <ScrollView showsVerticalScrollIndicator={false}>
           {renderContent()}
-          <View style={{height: 40}} />
+          <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -319,15 +337,17 @@ export default function AlmanacScreen() {
 }
 
 const S = StyleSheet.create({
-  fill:       {flex: 1},
-  header:     {alignItems: 'center', paddingTop: 20, paddingBottom: 8},
-  title:      {fontSize: 20, color: Colors.gold.bright, fontWeight: '600', letterSpacing: 2},
-  subtitle:   {fontSize: 10, color: Colors.text.muted, marginTop: 4},
-  tabRow:     {paddingHorizontal: 16, paddingVertical: 8, gap: 8},
-  tab:        {paddingHorizontal: 16, paddingVertical: 7, borderRadius: 14,
-               backgroundColor: Colors.bg.dark, borderWidth: 1,
-               borderColor: 'rgba(212,160,23,0.15)'},
-  tabActive:  {backgroundColor: 'rgba(212,160,23,0.15)', borderColor: Colors.gold.bright},
-  tabText:    {fontSize: 11, color: Colors.text.muted},
-  tabTextActive: {color: Colors.gold.bright, fontWeight: '600'},
+  fill: { flex: 1 },
+  header: { alignItems: 'center', paddingTop: 20, paddingBottom: 8 },
+  title: { fontSize: 20, color: Colors.gold.bright, fontWeight: '600', letterSpacing: 2 },
+  subtitle: { fontSize: 10, color: Colors.text.muted, marginTop: 4 },
+  tabRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
+  tab: {
+    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 14,
+    backgroundColor: Colors.bg.dark, borderWidth: 1,
+    borderColor: 'rgba(212,160,23,0.15)'
+  },
+  tabActive: { backgroundColor: 'rgba(212,160,23,0.15)', borderColor: Colors.gold.bright },
+  tabText: { fontSize: 11, color: Colors.text.muted },
+  tabTextActive: { color: Colors.gold.bright, fontWeight: '600' },
 });
