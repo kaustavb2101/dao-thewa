@@ -29,7 +29,7 @@
     "react-native-purchases": "^7.26.1",
     "react-native-reanimated": "3.7.2",
     "react-native-safe-area-context": "^4.9.0",
-    "react-native-screens": "^3.29.0",
+    "react-native-screens": "3.29.0",
     "react-native-svg": "^15.1.0",
     "react-native-vector-icons": "^10.0.3",
     "react-native-watch-connectivity": "^1.1.0",
