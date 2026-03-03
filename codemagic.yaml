@@ -69,4 +69,4 @@ workflows:
           ./gradlew assembleRelease bundleRelease
     artifacts:
       - android/app/build/outputs/**/*.aab
-                - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.apk
