@@ -91,7 +91,7 @@ function NumberPicker({
           style={NP.btn}
           onPress={() => onChange(Math.max(min, value - 1))}
           accessibilityRole="button"
-          accessibilityLabel={`ลด ${label}`}
+          accessibilityLabel={'ลด ' + label}
           hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         >
           <Text style={NP.arrow}>‹</Text>
@@ -101,7 +101,7 @@ function NumberPicker({
           style={NP.btn}
           onPress={() => onChange(Math.min(max, value + 1))}
           accessibilityRole="button"
-          accessibilityLabel={`เพิ่ม ${label}`}
+          accessibilityLabel={'เพิ่ม ' + label}
           hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         >
           <Text style={NP.arrow}>›</Text>
@@ -314,7 +314,7 @@ function StepLocation({
             onPress={() => setSelected(i)}
             accessibilityRole="button"
             accessibilityState={{ selected: selected === i }}
-            accessibilityLabel={`ประสูติที่ ${city.name}`}
+            accessibilityLabel={'ประสูติที่ ' + city.name}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Text style={[S.cityName, selected === i && S.cityNameActive]}>{city.name}</Text>

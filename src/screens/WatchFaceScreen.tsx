@@ -180,7 +180,7 @@ export default function WatchFaceScreen() {
                 onPress={() => setTheme(t.key)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: theme === t.key }}
-                accessibilityLabel={`เลือกธีม ${t.label}`}
+                accessibilityLabel={'เลือกธีม ' + t.label}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <View style={[S.themeColor, { backgroundColor: t.colors[2] }]} />

@@ -20,8 +20,8 @@ export function PlanetChip({ grahaKey, selected = false, onPress }: Props) {
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={`ดาว ${graha.nameThai}`}
+      accessibilityState={{ selected: selected }}
+      accessibilityLabel={'ดาว ' + graha.nameThai}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       onPress={onPress}
       style={[

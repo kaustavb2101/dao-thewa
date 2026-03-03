@@ -46,8 +46,8 @@ export function TransitCard({ rule }: Props) {
     <TouchableOpacity
       onPress={toggleExpand}
       accessibilityRole="button"
-      accessibilityState={{ expanded }}
-      accessibilityLabel={`รายละเอียดคำทำนาย: ${rule.titleThai}`}
+      accessibilityState={{ expanded: expanded }}
+      accessibilityLabel={'รายละเอียดคำทำนาย: ' + rule.titleThai}
       style={[styles.card, { borderLeftColor: accentColor }]}
       activeOpacity={0.85}>
       {/* Header row */}
