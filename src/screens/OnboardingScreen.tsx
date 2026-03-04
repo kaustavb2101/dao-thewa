@@ -8,6 +8,7 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   Dimensions, ScrollView, Animated, Platform, KeyboardAvoidingView,
+  Modal, FlatList
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,16 +23,7 @@ const { width, height } = Dimensions.get('window');
 const STEPS = ['welcome', 'date', 'time', 'location', 'ready'] as const;
 type Step = typeof STEPS[number];
 
-// ─── THAI CITY PRESETS ───────────────────────────────────────────
-
-const THAI_CITIES = [
-  { name: 'กรุงเทพฯ', nameEn: 'Bangkok', lat: 13.7563, lng: 100.5018 },
-  { name: 'เชียงใหม่', nameEn: 'Chiang Mai', lat: 18.7883, lng: 98.9853 },
-  { name: 'ภูเก็ต', nameEn: 'Phuket', lat: 7.8804, lng: 98.3923 },
-  { name: 'ขอนแก่น', nameEn: 'Khon Kaen', lat: 16.4419, lng: 102.8360 },
-  { name: 'หาดใหญ่', nameEn: 'Hat Yai', lat: 7.0086, lng: 100.4747 },
-  { name: 'อื่นๆ', nameEn: 'Other', lat: 13.7563, lng: 100.5018 },
-];
+import { COUNTRIES, CountryData, LocationData } from '../config/locations';
 
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -246,7 +238,7 @@ function StepTime({ onNext, onBack }: { onNext: (h: number, m: number) => void; 
         <Text style={S.bigTime}>
           {String(hour).padStart(2, '0')}:{String(min).padStart(2, '0')}
         </Text>
-        <Text style={S.timeZone}>เวลาประเทศไทย (UTC+7)</Text>
+        <Text style={S.timeZone}>ตามเวลาท้องถิ่นสถานที่เกิด (Local Time)</Text>
       </View>
 
       {!unknown && (
@@ -291,41 +283,108 @@ function StepTime({ onNext, onBack }: { onNext: (h: number, m: number) => void; 
   );
 }
 
+// ─── CUSTOM DROPDOWN SELECTOR (GLASSMORPHIC) ─────────────────────
+
+function DropdownSelector({
+  label, value, options, onSelect, placeholder
+}: {
+  label: string; value: string; options: { id: string; name: string; nameEn?: string }[];
+  onSelect: (id: string) => void; placeholder: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <View style={S.dropdownContainer}>
+      <Text style={S.dropdownLabel}>{label}</Text>
+      <TouchableOpacity
+        style={S.dropdownButton}
+        onPress={() => setIsOpen(true)}
+      >
+        <Text style={[S.dropdownButtonText, !value && S.dropdownPlaceholder]}>
+          {value || placeholder}
+        </Text>
+        <Text style={S.dropdownIcon}>▼</Text>
+      </TouchableOpacity>
+
+      <Modal visible={isOpen} transparent animationType="fade">
+        <TouchableOpacity
+          style={S.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsOpen(false)}
+        >
+          <View style={S.modalContent}>
+            <Text style={S.modalTitle}>เลือก{label}</Text>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={S.modalItem}
+                  onPress={() => {
+                    onSelect(item.id);
+                    setIsOpen(false);
+                  }}
+                >
+                  <Text style={S.modalItemText}>{item.name}</Text>
+                  {item.nameEn && <Text style={S.modalItemSub}>{item.nameEn}</Text>}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+}
+
 // ─── STEP: LOCATION ───────────────────────────────────────────────
 
 function StepLocation({
   onNext, onBack,
 }: {
-  onNext: (lat: number, lng: number, city: string) => void;
+  onNext: (lat: number, lng: number, city: string, tz: number) => void;
   onBack: () => void;
 }) {
-  const [selected, setSelected] = useState(0);
+  const [selectedCountryId, setSelectedCountryId] = useState<string>(COUNTRIES[0].id);
+  const selectedCountry = COUNTRIES.find((c) => c.id === selectedCountryId) || COUNTRIES[0];
+
+  const [selectedCityName, setSelectedCityName] = useState<string>(selectedCountry.cities[0].name);
+  const selectedCity = selectedCountry.cities.find((c) => c.name === selectedCityName) || selectedCountry.cities[0];
 
   return (
     <View style={S.stepWrap}>
       <Text style={S.stepTitle}>สถานที่เกิด</Text>
-      <Text style={S.stepSub}>ใช้คำนวณดวงอาทิตย์ขึ้น/ตก และฤกษ์ท้องถิ่น</Text>
+      <Text style={S.stepSub}>ใช้สำหรับคำนวณตำแหน่งดวงดาวและสมการเวลาท้องถิ่น</Text>
 
-      <View style={S.cityGrid}>
-        {THAI_CITIES.map((city, i) => (
-          <TouchableOpacity
-            key={i}
-            style={[S.cityChip, selected === i && S.cityChipActive]}
-            onPress={() => setSelected(i)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: selected === i }}
-            accessibilityLabel={'ประสูติที่ ' + city.name}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={[S.cityName, selected === i && S.cityNameActive]}>{city.name}</Text>
-            <Text style={S.cityEn}>{city.nameEn}</Text>
-          </TouchableOpacity>
-        ))}
+      <View style={S.locationSelectors}>
+        <DropdownSelector
+          label="ประเทศ (Country)"
+          placeholder="เลือกประเทศ"
+          value={selectedCountry.name}
+          options={COUNTRIES.map((c) => ({ id: c.id, name: c.name, nameEn: c.nameEn }))}
+          onSelect={(id) => {
+            setSelectedCountryId(id);
+            const newCountry = COUNTRIES.find((c) => c.id === id)!;
+            setSelectedCityName(newCountry.cities[0].name);
+          }}
+        />
+
+        <DropdownSelector
+          label="เมือง (City / Province)"
+          placeholder="เลือกเมือง"
+          value={selectedCity.name}
+          options={selectedCountry.cities.map((c) => ({ id: c.name, name: c.name, nameEn: c.nameEn }))}
+          onSelect={(name) => setSelectedCityName(name)}
+        />
       </View>
 
       <View style={S.coordBox}>
         <Text style={S.coordText}>
-          🌐 {THAI_CITIES[selected].lat.toFixed(4)}°N, {THAI_CITIES[selected].lng.toFixed(4)}°E
+          🌐 พิกัดภูมิศาสตร์: {selectedCity.lat.toFixed(4)}°N, {selectedCity.lng.toFixed(4)}°E
+        </Text>
+        <Text style={S.coordTextSub}>
+          โซนเวลา (Timezone): UTC {selectedCity.tz >= 0 ? '+' : ''}{selectedCity.tz / 60}
         </Text>
       </View>
 
@@ -341,9 +400,10 @@ function StepLocation({
         <TouchableOpacity
           style={S.primaryBtn}
           onPress={() => onNext(
-            THAI_CITIES[selected].lat,
-            THAI_CITIES[selected].lng,
-            THAI_CITIES[selected].name,
+            selectedCity.lat,
+            selectedCity.lng,
+            selectedCity.name,
+            selectedCity.tz
           )}
           accessibilityRole="button"
           accessibilityLabel="ดำเนินการต่อ"
@@ -435,6 +495,7 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   const [birthLat, setBirthLat] = useState(13.7563);
   const [birthLng, setBirthLng] = useState(100.5018);
   const [birthCity, setBirthCity] = useState('กรุงเทพฯ');
+  const [birthTzOffset, setBirthTzOffset] = useState(420);
 
   const { setUser, setOnboardingComplete } = useUserStore();
 
@@ -442,15 +503,23 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   const next = () => setStepIndex(i => Math.min(STEPS.length - 1, i + 1));
   const back = () => setStepIndex(i => Math.max(0, i - 1));
 
+  // Compute Adjusted Time (BKK = UTC+7)
+  const bkkDiff = 420 - birthTzOffset;
+  const bkkTimeRef = new Date(birthDate);
+  bkkTimeRef.setHours(birthHour, birthMin + bkkDiff, 0, 0);
+  const bkkDate = new Date(bkkTimeRef.getFullYear(), bkkTimeRef.getMonth(), bkkTimeRef.getDate());
+  const bkkHour = bkkTimeRef.getHours();
+  const bkkMin = bkkTimeRef.getMinutes();
+
   const handleFinish = async () => {
-    const birthRasi = computeBirthRasi(birthDate);
-    const birthNak = computeBirthNakshatra(birthRasi, birthDate);
-    const wanGerd = birthDate.getDay();
+    const birthRasi = computeBirthRasi(bkkDate);
+    const birthNak = computeBirthNakshatra(birthRasi, bkkDate);
+    const wanGerd = bkkDate.getDay();
 
     await setUser({
       id: `user_${Date.now()}`,
-      birthDate,
-      birthTime: `${String(birthHour).padStart(2, '0')}:${String(birthMin).padStart(2, '0')}`,
+      birthDate: bkkDate,
+      birthTime: `${String(bkkHour).padStart(2, '0')}:${String(bkkMin).padStart(2, '0')}`,
       birthLat,
       birthLng,
       birthTimezone: 'Asia/Bangkok',
@@ -511,16 +580,16 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
             )}
             {step === 'location' && (
               <StepLocation
-                onNext={(lat, lng, city) => { setBirthLat(lat); setBirthLng(lng); setBirthCity(city); next(); }}
+                onNext={(lat, lng, city, tz) => { setBirthLat(lat); setBirthLng(lng); setBirthCity(city); setBirthTzOffset(tz); next(); }}
                 onBack={back}
               />
             )}
             {step === 'ready' && (
               <StepReady
-                birthDate={birthDate} birthHour={birthHour} birthMin={birthMin}
-                birthCity={birthCity}
-                birthRasi={computeBirthRasi(birthDate)}
-                wanGerd={birthDate.getDay()}
+                birthDate={bkkDate} birthHour={bkkHour} birthMin={bkkMin}
+                birthCity={birthCity + ' (เวลาไทย)'}
+                birthRasi={computeBirthRasi(bkkDate)}
+                wanGerd={bkkDate.getDay()}
                 onFinish={handleFinish}
               />
             )}
@@ -586,23 +655,38 @@ const S = StyleSheet.create({
   unknownBtnActive: { borderColor: Colors.gold.bright, backgroundColor: 'rgba(245,200,66,0.08)' },
   unknownText: { fontSize: 11, color: Colors.text.muted },
   unknownTextActive: { color: Colors.gold.bright },
-  // Location
-  cityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  cityChip: {
-    width: (width - 64) / 3, backgroundColor: Colors.bg.dark, borderRadius: 12,
-    padding: 12, alignItems: 'center', borderWidth: 1,
-    borderColor: 'rgba(245,200,66,0.12)'
+  // Location & Dropdowns
+  locationSelectors: { marginBottom: 24, gap: 16 },
+  dropdownContainer: {},
+  dropdownLabel: { fontSize: 11, color: Colors.text.muted, marginBottom: 8, letterSpacing: 0.5 },
+  dropdownButton: {
+    backgroundColor: Colors.bg.dark, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(245,200,66,0.15)'
   },
-  cityChipActive: { borderColor: Colors.gold.bright, backgroundColor: 'rgba(245,200,66,0.08)' },
-  cityName: { fontSize: 12, color: Colors.text.secondary, fontWeight: '500' },
-  cityNameActive: { color: Colors.gold.bright },
-  cityEn: { fontSize: 8, color: Colors.text.muted, marginTop: 2 },
+  dropdownButtonText: { fontSize: 14, color: Colors.text.primary, fontWeight: '500' },
+  dropdownPlaceholder: { color: Colors.text.muted, fontWeight: '400' },
+  dropdownIcon: { fontSize: 10, color: Colors.gold.bright },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(3,6,16,0.85)', justifyContent: 'center', padding: 24 },
+  modalContent: {
+    backgroundColor: '#0A122A', borderRadius: 20, padding: 20, maxHeight: height * 0.6,
+    borderWidth: 1, borderColor: 'rgba(245,200,66,0.2)', elevation: 10, shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 20
+  },
+  modalTitle: { fontSize: 18, color: Colors.gold.bright, fontWeight: '600', marginBottom: 16, textAlign: 'center' },
+  modalItem: {
+    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
+  },
+  modalItemText: { fontSize: 14, color: Colors.text.primary },
+  modalItemSub: { fontSize: 11, color: Colors.text.muted },
+
   coordBox: {
-    backgroundColor: Colors.bg.dark, borderRadius: 10, padding: 10,
+    backgroundColor: 'rgba(79,195,247,0.05)', borderRadius: 12, padding: 14,
     alignItems: 'center', borderWidth: 1, borderColor: 'rgba(79,195,247,0.15)',
     marginBottom: 24
   },
-  coordText: { fontSize: 10, color: Colors.celestial.sky },
+  coordText: { fontSize: 11, color: Colors.celestial.sky, marginBottom: 4 },
+  coordTextSub: { fontSize: 10, color: 'rgba(79,195,247,0.6)' },
   // Summary
   summaryCard: {
     backgroundColor: Colors.bg.dark, borderRadius: 16, padding: 16,

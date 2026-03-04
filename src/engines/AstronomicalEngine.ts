@@ -1,5 +1,5 @@
 // /src/engines/AstronomicalEngine.ts
-import Astronomy from 'astronomy-engine'
+import * as Astronomy from 'astronomy-engine'
 import { DateTime } from 'luxon'
 import { NAVA_GRAHA, THAI_RASI, NAKSHATRAS, HORA_SEQUENCE, BUDDHIST_ERA_OFFSET } from '../../config/constants'
 
