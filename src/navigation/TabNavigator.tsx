@@ -14,6 +14,7 @@ import DailyBriefScreen from '../screens/DailyBriefScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import AlmanacScreen from '../screens/AlmanacScreen';
 import WatchFaceScreen from '../screens/WatchFaceScreen';
+import FaceReadingScreen from '../screens/FaceReadingScreen';
 
 export type RootTabParamList = {
   Clock: undefined;
@@ -21,6 +22,7 @@ export type RootTabParamList = {
   Calendar: undefined;
   Almanac: undefined;
   WatchFace: undefined;
+  FaceReading: undefined;
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -88,6 +90,14 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'นาฬิกาข้อมือ',
           tabBarIcon: ({focused}) => <TabIcon symbol="⌚" focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="FaceReading"
+        component={FaceReadingScreen}
+        options={{
+          tabBarLabel: 'โหงวเฮ้ง',
+          tabBarIcon: ({focused}) => <TabIcon symbol="🔮" focused={focused} />,
         }}
       />
     </Tab.Navigator>
