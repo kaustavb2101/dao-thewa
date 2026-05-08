@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>EWA — Earned Wages Access</title>
+<style>
+  /* ── Reset & base ────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-deep:    #0A0B1E;
+    --bg-dark:    #111230;
+    --bg-surface: #1A1B3A;
+    --bg-subtle:  #242550;
+    --gold:       #F5C842;
+    --gold-warm:  #E8A020;
+    --gold-faint: rgba(245,200,66,.13);
+    --sky:        #4FC3F7;
+    --text:       #FFFFFF;
+    --text-sec:   rgba(255,255,255,.7);
+    --text-muted: rgba(255,255,255,.4);
+    --success:    #4CAF50;
+    --warning:    #FF9800;
+    --danger:     #F44336;
+  }
+  html, body {
+    height: 100%;
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── App shell ───────────────────────────────────── */
+  #app {
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-deep);
+    box-shadow: 0 0 60px rgba(0,0,0,.6);
+  }
+
+  /* ── Screens ─────────────────────────────────────── */
+  .screen {
+    flex: 1;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+    padding-bottom: 4px;
+  }
+  .screen.active { display: flex; }
+  .screen-scroll { flex: 1; overflow-y: auto; }
+
+  /* ── Bottom nav ──────────────────────────────────── */
+  nav {
+    display: flex;
+    background: var(--bg-dark);
+    border-top: 1px solid var(--bg-subtle);
+    flex-shrink: 0;
+  }
+  nav button {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 10px 4px 14px;
+    cursor: pointer;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: color .15s;
+  }
+  nav button.active { color: var(--gold); }
+  nav button .nav-icon { font-size: 22px; }
+
+  /* ── Header row ──────────────────────────────────── */
+  .hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 16px 8px;
+  }
+  .hdr-title { font-size: 18px; font-weight: 700; }
+  .back-btn {
+    width: 38px; height: 38px;
+    border: none; background: none;
+    color: var(--text); font-size: 22px;
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
+
+  /* ── Balance card ────────────────────────────────── */
+  .balance-card {
+    margin: 8px 16px 0;
+    border-radius: 20px;
+    background: linear-gradient(160deg, #1A2A4A 0%, #0F1E38 100%);
+    padding: 22px 20px 18px;
+  }
+  .balance-label {
+    font-size: 12px;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--text-sec);
+  }
+  .balance-amount {
+    font-size: 46px;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 4px 0 18px;
+    letter-spacing: -1px;
+  }
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 18px;
+  }
+  .stat { flex: 1; text-align: center; }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+  .stat-value { font-size: 14px; font-weight: 600; }
+  .stat-divider { width: 1px; background: var(--bg-subtle); align-self: stretch; }
+  .progress-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .progress-label { font-size: 11px; color: var(--text-muted); }
+  .track {
+    height: 6px; background: var(--bg-subtle);
+    border-radius: 3px; overflow: hidden;
+  }
+  .fill {
+    height: 100%; background: var(--gold-warm);
+    border-radius: 3px; transition: width .4s ease;
+  }
+
+  /* ── Pay-period banner ───────────────────────────── */
+  .pp-banner {
+    margin: 10px 16px 0;
+    background: var(--bg-dark);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .pp-row { display: flex; justify-content: space-between; margin-bottom: 7px; }
+  .pp-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+  .pp-range { font-size: 12px; font-weight: 600; color: var(--text-sec); }
+  .pp-sub { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 6px; }
+  .pp-track .fill { background: var(--sky); }
+
+  /* ── CTA buttons ─────────────────────────────────── */
+  .cta-row { display: flex; gap: 10px; padding: 14px 16px 0; }
+  .btn {
+    flex: 1; height: 52px; border-radius: 14px;
+    border: none; cursor: pointer;
+    font-size: 16px; font-weight: 700;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--gold); color: var(--bg-deep); }
+  .btn-secondary {
+    background: var(--bg-dark);
+    border: 1px solid var(--bg-subtle);
+    color: var(--text-sec);
+  }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Info strip ──────────────────────────────────── */
+  .info-strip {
+    display: flex;
+    justify-content: space-around;
+    background: var(--bg-dark);
+    border-radius: 12px;
+    margin: 14px 16px 0;
+    padding: 13px;
+  }
+  .info-item { text-align: center; }
+  .info-value { font-size: 16px; font-weight: 700; }
+  .info-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ── Section ─────────────────────────────────────── */
+  .section { margin-top: 22px; }
+  .section-hdr {
+    display: flex; justify-content: space-between;
+    align-items: center; padding: 0 16px; margin-bottom: 8px;
+  }
+  .section-title { font-size: 16px; font-weight: 700; }
+  .section-link { font-size: 13px; color: var(--gold); cursor: pointer; background: none; border: none; }
+
+  /* ── TX list ─────────────────────────────────────── */
+  .tx-list {
+    background: var(--bg-dark);
+    margin: 0 16px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .tx-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--bg-subtle);
+  }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+    flex-shrink: 0; margin-right: 12px; margin-top: 2px;
+  }
+  .tx-body { flex: 1; min-width: 0; }
+  .tx-top { display: flex; justify-content: space-between; align-items: center; }
+  .tx-type { font-size: 15px; font-weight: 600; }
+  .tx-amount { font-size: 15px; font-weight: 700; }
+  .tx-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; }
+  .tx-note { font-size: 12px; color: var(--text-sec); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
+  .tx-meta { display: flex; align-items: center; gap: 6px; }
+  .tx-fee { font-size: 11px; color: var(--text-muted); }
+  .badge {
+    border-radius: 4px; padding: 2px 6px;
+    font-size: 10px; font-weight: 600;
+    text-transform: capitalize;
+  }
+  .tx-date { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ── Avatar ──────────────────────────────────────── */
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--gold-faint);
+    border: 1px solid var(--gold-warm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--gold);
+    cursor: pointer; flex-shrink: 0;
+  }
+
+  /* ── Withdraw screen ─────────────────────────────── */
+  .amount-display {
+    display: flex; align-items: flex-end;
+    justify-content: center;
+    margin: 20px 0 4px;
+  }
+  .currency-sign {
+    font-size: 32px; font-weight: 300;
+    color: var(--gold); margin-bottom: 10px; margin-right: 4px;
+  }
+  .amount-text {
+    font-size: 72px; font-weight: 700;
+    color: var(--gold); line-height: 1;
+  }
+  .available-hint { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 14px; }
+
+  .fee-card {
+    margin: 0 16px 14px;
+    background: var(--bg-dark);
+    border-radius: 12px; padding: 14px;
+  }
+  .fee-row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .fee-label { font-size: 13px; color: var(--text-sec); }
+  .fee-value { font-size: 13px; font-weight: 600; }
+  .fee-total {
+    border-top: 1px solid var(--bg-subtle);
+    margin-top: 6px; padding-top: 10px;
+  }
+  .fee-total-label { font-size: 14px; font-weight: 600; }
+  .fee-total-value { font-size: 14px; font-weight: 700; color: var(--gold); }
+  .bank-note { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 8px; }
+
+  /* ── Numpad ──────────────────────────────────────── */
+  .presets {
+    display: flex; justify-content: center;
+    gap: 10px; flex-wrap: wrap;
+    padding: 0 16px; margin-bottom: 14px;
+  }
+  .preset-chip {
+    border: 1px solid var(--bg-subtle);
+    border-radius: 20px; padding: 7px 18px;
+    background: var(--bg-dark);
+    color: var(--text-sec); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .preset-chip.active, .preset-chip:hover {
+    border-color: var(--gold);
+    background: var(--gold-faint);
+    color: var(--gold);
+  }
+  .numpad {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; padding: 0 16px; margin-bottom: 16px;
+  }
+  .numpad-key {
+    height: 54px; background: var(--bg-dark);
+    border: none; border-radius: 12px;
+    color: var(--text); font-size: 20px; font-weight: 500;
+    cursor: pointer; transition: background .1s, transform .1s;
+  }
+  .numpad-key:active { transform: scale(.95); background: var(--bg-surface); }
+  .numpad-key.alt { background: var(--bg-surface); color: var(--gold-warm); font-size: 13px; font-weight: 700; }
+
+  .submit-btn {
+    display: block; width: calc(100% - 32px);
+    margin: 0 16px 10px; height: 56px;
+    background: var(--gold); color: var(--bg-deep);
+    border: none; border-radius: 16px;
+    font-size: 18px; font-weight: 700;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .submit-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .disclaimer {
+    font-size: 11px; color: var(--text-muted);
+    text-align: center; padding: 0 24px 20px;
+    line-height: 1.5;
+  }
+
+  /* ── History screen ──────────────────────────────── */
+  .summary-row {
+    display: flex; justify-content: space-around;
+    background: var(--bg-dark); border-radius: 12px;
+    margin: 6px 16px 0; padding: 13px;
+  }
+  .summary-item { text-align: center; flex: 1; }
+  .summary-value { font-size: 15px; font-weight: 700; }
+  .summary-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .summary-divider { width: 1px; background: var(--bg-subtle); }
+  .filter-row { display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .pill {
+    padding: 6px 14px; border-radius: 16px;
+    background: var(--bg-dark); border: 1px solid var(--bg-subtle);
+    color: var(--text-muted); font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; transition: all .15s;
+  }
+  .pill.active { background: var(--gold-faint); border-color: var(--gold); color: var(--gold); }
+  .full-tx-list { margin: 0 16px; background: var(--bg-dark); border-radius: 12px; overflow: hidden; }
+  .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 16px; font-size: 14px; }
+
+  /* ── Profile screen ──────────────────────────────── */
+  .avatar-block {
+    display: flex; flex-direction: column;
+    align-items: center; padding: 22px 16px 10px;
+  }
+  .avatar-lg {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--gold-faint); border: 2px solid var(--gold-warm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .profile-name { font-size: 22px; font-weight: 700; }
+  .profile-pos { font-size: 14px; color: var(--text-sec); margin-top: 4px; }
+  .profile-emp { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .card {
+    margin: 10px 16px 0;
+    background: var(--bg-dark);
+    border-radius: 16px; padding: 16px;
+  }
+  .card-title {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--text-muted); margin-bottom: 12px;
+  }
+  .detail-row {
+    display: flex; justify-content: space-between;
+    align-items: center; padding: 8px 0;
+    border-bottom: 1px solid var(--bg-subtle);
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { font-size: 14px; color: var(--text-sec); }
+  .detail-value { font-size: 14px; font-weight: 600; }
+  .detail-value.accent { color: var(--gold); }
+
+  /* ── Modals ──────────────────────────────────────── */
+  .overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.7);
+    display: none; align-items: flex-end;
+    z-index: 100;
+  }
+  .overlay.open { display: flex; }
+  .modal-card {
+    background: var(--bg-dark);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px 36px;
+    width: 100%;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-icon { font-size: 48px; text-align: center; margin-bottom: 8px; }
+  .modal-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+  .modal-body { font-size: 14px; color: var(--text-sec); text-align: center; line-height: 1.6; margin-bottom: 20px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-cancel {
+    flex: 1; height: 52px; background: var(--bg-surface);
+    border: none; border-radius: 14px;
+    color: var(--text-sec); font-size: 16px; font-weight: 600;
+    cursor: pointer;
+  }
+  .modal-confirm {
+    flex: 1; height: 52px; background: var(--gold);
+    border: none; border-radius: 14px;
+    color: var(--bg-deep); font-size: 16px; font-weight: 700;
+    cursor: pointer;
+  }
+  .tx-ref { font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 20px; font-family: monospace; }
+
+  /* ── Toast ───────────────────────────────────────── */
+  #toast {
+    position: absolute; top: 20px; left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--bg-surface); color: var(--text);
+    padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+    white-space: nowrap; z-index: 200;
+    transition: transform .3s ease;
+    border: 1px solid var(--bg-subtle);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Scrollbar ───────────────────────────────────── */
+  ::-webkit-scrollbar { width: 0; }
+  .footer-gap { height: 28px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── DASHBOARD SCREEN ───────────────────────────── -->
+  <div class="screen active screen-scroll" id="screen-dashboard">
+    <div class="hdr">
+      <div>
+        <div style="font-size:22px;font-weight:700;">Hello, Kaustav 👋</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">Dao Thewa Co., Ltd.</div>
+      </div>
+      <div class="avatar" onclick="showScreen('profile')">KB</div>
+    </div>
+
+    <div class="balance-card">
+      <div class="balance-label">Available to Withdraw</div>
+      <div class="balance-amount" id="dash-balance">$1,008.00</div>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-label">Earned this period</div>
+          <div class="stat-value" id="dash-earned">$2,816.00</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <div class="stat-label">Already drawn</div>
+          <div class="stat-value" style="color:var(--warning)" id="dash-drawn">$400.00</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <div class="stat-label">Hours worked</div>
+          <div class="stat-value">64h</div>
+        </div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">Draw limit used</span>
+        <span class="progress-label" id="dash-pct">28%</span>
+      </div>
+      <div class="track"><div class="fill" id="dash-bar" style="width:28%"></div></div>
+    </div>
+
+    <div class="pp-banner">
+      <div class="pp-row">
+        <span class="pp-label">Pay Period</span>
+        <span class="pp-range">May 1 – May 14</span>
+      </div>
+      <div class="track pp-track"><div class="fill" style="width:57%;background:var(--sky)"></div></div>
+      <div class="pp-sub">6 days until payday</div>
+    </div>
+
+    <div class="cta-row">
+      <button class="btn btn-primary" id="dash-cta" onclick="showScreen('withdraw')">Get My Money</button>
+      <button class="btn btn-secondary" onclick="showScreen('history')">History</button>
+    </div>
+
+    <div class="info-strip">
+      <div class="info-item"><div class="info-value">1.5%</div><div class="info-label">Fee per advance</div></div>
+      <div class="info-item"><div class="info-value">50%</div><div class="info-label">Max of earned</div></div>
+      <div class="info-item"><div class="info-value">~2 min</div><div class="info-label">Transfer time</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr">
+        <span class="section-title">Recent Activity</span>
+        <button class="section-link" onclick="showScreen('history')">See all</button>
+      </div>
+      <div class="tx-list" id="recent-tx"></div>
+    </div>
+    <div class="footer-gap"></div>
+  </div>
+
+  <!-- ── WITHDRAW SCREEN ────────────────────────────── -->
+  <div class="screen screen-scroll" id="screen-withdraw">
+    <div class="hdr">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <span class="hdr-title">Withdraw Wages</span>
+      <div style="width:38px"></div>
+    </div>
+
+    <div class="amount-display">
+      <span class="currency-sign">$</span>
+      <span class="amount-text" id="wd-amount-display">0</span>
+    </div>
+    <div class="available-hint" id="wd-hint">Up to $1,008 available</div>
+
+    <div class="fee-card" id="fee-card" style="display:none">
+      <div class="fee-row"><span class="fee-label">Advance amount</span><span class="fee-value" id="fc-amount"></span></div>
+      <div class="fee-row"><span class="fee-label">Service fee (1.5%)</span><span class="fee-value" id="fc-fee"></span></div>
+      <div class="fee-row fee-total">
+        <span class="fee-total-label">Total at payday</span>
+        <span class="fee-total-value" id="fc-total"></span>
+      </div>
+      <div class="bank-note">Deposits to bank ••••4291</div>
+    </div>
+
+    <div class="presets" id="preset-row"></div>
+    <div class="numpad" id="numpad"></div>
+
+    <button class="submit-btn" id="wd-submit" disabled onclick="openModal('confirm')">Get My Money</button>
+    <div class="disclaimer">Funds typically arrive within 2 minutes. The advance plus fee will be automatically repaid from your next paycheck.</div>
+  </div>
+
+  <!-- ── HISTORY SCREEN ─────────────────────────────── -->
+  <div class="screen screen-scroll" id="screen-history">
+    <div class="hdr">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <span class="hdr-title">Transaction History</span>
+      <div style="width:38px"></div>
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-item">
+        <div class="summary-value" id="hist-lifetime">$4,600.00</div>
+        <div class="summary-label">Lifetime advanced</div>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <div class="summary-value" id="hist-fees">$11.25</div>
+        <div class="summary-label">Total fees paid</div>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-item">
+        <div class="summary-value" id="hist-count">3</div>
+        <div class="summary-label">Advances taken</div>
+      </div>
+    </div>
+
+    <div class="filter-row" id="filter-row"></div>
+    <div class="full-tx-list" id="full-tx-list"></div>
+    <div class="footer-gap"></div>
+  </div>
+
+  <!-- ── PROFILE SCREEN ─────────────────────────────── -->
+  <div class="screen screen-scroll" id="screen-profile">
+    <div class="hdr">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <span class="hdr-title">My Profile</span>
+      <div style="width:38px"></div>
+    </div>
+    <div class="avatar-block">
+      <div class="avatar-lg">KB</div>
+      <div class="profile-name">Kaustav Bose</div>
+      <div class="profile-pos">Senior Engineer</div>
+      <div class="profile-emp">Dao Thewa Co., Ltd.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Employment Details</div>
+      <div class="detail-row"><span class="detail-label">Hourly rate</span><span class="detail-value">$55.00 / hr</span></div>
+      <div class="detail-row"><span class="detail-label">Pay cycle</span><span class="detail-value">Bi-weekly</span></div>
+      <div class="detail-row"><span class="detail-label">Hours this period</span><span class="detail-value">64h</span></div>
+      <div class="detail-row"><span class="detail-label">Gross earned</span><span class="detail-value">$3,520.00</span></div>
+      <div class="detail-row"><span class="detail-label">Net earned (est.)</span><span class="detail-value accent" id="prof-net">$2,816.00</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Payout Account</div>
+      <div class="detail-row"><span class="detail-label">Bank account</span><span class="detail-value">••••4291</span></div>
+      <div class="detail-row"><span class="detail-label">Transfer speed</span><span class="detail-value">~2 minutes</span></div>
+      <div class="detail-row"><span class="detail-label">Service fee</span><span class="detail-value">1.5%</span></div>
+      <div class="detail-row"><span class="detail-label">Max advance</span><span class="detail-value">50% of net earned</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Lifetime Stats</div>
+      <div class="detail-row"><span class="detail-label">Total advanced</span><span class="detail-value" id="prof-lifetime">$4,600.00</span></div>
+      <div class="detail-row"><span class="detail-label">Current repayment</span><span class="detail-value" id="prof-repay">$400.00</span></div>
+    </div>
+    <div class="footer-gap"></div>
+  </div>
+
+  <!-- ── BOTTOM NAV ─────────────────────────────────── -->
+  <nav>
+    <button onclick="showScreen('dashboard')" id="nav-dashboard" class="active">
+      <span class="nav-icon">💰</span>Wages
+    </button>
+    <button onclick="showScreen('history')" id="nav-history">
+      <span class="nav-icon">📋</span>History
+    </button>
+    <button onclick="showScreen('profile')" id="nav-profile">
+      <span class="nav-icon">👤</span>Profile
+    </button>
+  </nav>
+
+  <!-- ── MODALS ─────────────────────────────────────── -->
+  <div class="overlay" id="modal-confirm">
+    <div class="modal-card">
+      <div class="modal-title">Confirm Advance</div>
+      <div class="modal-body" id="confirm-body"></div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeModal('confirm')">Cancel</button>
+        <button class="modal-confirm" onclick="doAdvance()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="modal-success">
+    <div class="modal-card">
+      <div class="modal-icon" style="color:var(--success)">✓</div>
+      <div class="modal-title">Money on the Way!</div>
+      <div class="modal-body" id="success-body"></div>
+      <div class="tx-ref" id="tx-ref"></div>
+      <button class="modal-confirm" style="width:100%" onclick="closeModal('success');showScreen('dashboard')">Done</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="modal-error">
+    <div class="modal-card">
+      <div class="modal-icon" style="color:var(--danger)">✕</div>
+      <div class="modal-title">Transfer Failed</div>
+      <div class="modal-body" id="error-body"></div>
+      <button class="modal-confirm" style="width:100%" onclick="closeModal('error')">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+const state = {
+  availableBalance: 1008,
+  netEarned: 2816,
+  advancedAmount: 400,
+  pendingRepayment: 400,
+  lifetimeAdvanced: 4600,
+  feeRate: 0.015,
+  maxPercent: 0.5,
+  withdrawAmount: 0,
+  transactions: [
+    { id:'tx-001', type:'advance', amount:400, fee:6, status:'completed', date:'May 3, 2026', note:'Advance to bank ••••4291' },
+    { id:'tx-002', type:'advance', amount:250, fee:3.75, status:'completed', date:'Apr 18, 2026', note:'Advance to bank ••••4291' },
+    { id:'tx-003', type:'repayment', amount:253.75, fee:0, status:'completed', date:'Apr 30, 2026', note:'Auto-repaid on payday' },
+    { id:'tx-004', type:'advance', amount:500, fee:7.5, status:'completed', date:'Apr 5, 2026', note:'Advance to bank ••••4291' },
+    { id:'tx-005', type:'repayment', amount:507.5, fee:0, status:'completed', date:'Apr 15, 2026', note:'Auto-repaid on payday' },
+  ],
+};
+
+// ── Helpers ────────────────────────────────────────────────────────
+const fmt = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const TYPE_META = {
+  advance:   { label:'Advance',   icon:'↑', color:'var(--gold)' },
+  repayment: { label:'Repayment', icon:'↓', color:'var(--success)' },
+  fee:       { label:'Fee',       icon:'•', color:'var(--text-muted)' },
+};
+const STATUS_COLOR = { completed:'var(--success)', pending:'var(--warning)', failed:'var(--danger)' };
+
+// ── Screen navigation ──────────────────────────────────────────────
+const SCREEN_NAV = { dashboard:'nav-dashboard', history:'nav-history', profile:'nav-profile' };
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  const navBtn = document.getElementById(SCREEN_NAV[name]);
+  if (navBtn) navBtn.classList.add('active');
+  if (name === 'withdraw') renderWithdraw();
+  if (name === 'history') renderHistory('all');
+  if (name === 'dashboard') renderDashboard();
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────
+function renderDashboard() {
+  document.getElementById('dash-balance').textContent = fmt(state.availableBalance);
+  document.getElementById('dash-earned').textContent = fmt(state.netEarned);
+  document.getElementById('dash-drawn').textContent = fmt(state.advancedAmount);
+  const pct = Math.round((state.advancedAmount / state.netEarned) * 100);
+  document.getElementById('dash-pct').textContent = pct + '%';
+  document.getElementById('dash-bar').style.width = Math.min(pct, 100) + '%';
+  document.getElementById('dash-cta').disabled = state.availableBalance <= 0;
+
+  // Recent: top 3
+  const container = document.getElementById('recent-tx');
+  container.innerHTML = '';
+  state.transactions.slice(0, 3).forEach(tx => {
+    container.appendChild(buildTxRow(tx));
+  });
+}
+
+// ── Transaction row ────────────────────────────────────────────────
+function buildTxRow(tx) {
+  const m = TYPE_META[tx.type] || TYPE_META.advance;
+  const isAdv = tx.type === 'advance';
+  const div = document.createElement('div');
+  div.className = 'tx-row';
+  div.innerHTML = `
+    <div class="tx-icon" style="border-color:${m.color};color:${m.color}">${m.icon}</div>
+    <div class="tx-body">
+      <div class="tx-top">
+        <span class="tx-type">${m.label}</span>
+        <span class="tx-amount" style="color:${m.color}">${isAdv ? '+' : '-'}${fmt(tx.amount)}</span>
+      </div>
+      <div class="tx-bottom">
+        <span class="tx-note">${tx.note}</span>
+        <div class="tx-meta">
+          ${isAdv && tx.fee > 0 ? `<span class="tx-fee">Fee ${fmt(tx.fee)}</span>` : ''}
+          <span class="badge" style="background:${STATUS_COLOR[tx.status]}22;color:${STATUS_COLOR[tx.status]}">${tx.status}</span>
+        </div>
+      </div>
+      <div class="tx-date">${tx.date}</div>
+    </div>`;
+  return div;
+}
+
+// ── Withdraw screen ────────────────────────────────────────────────
+function renderWithdraw() {
+  state.withdrawAmount = 0;
+  updateAmountDisplay();
+  buildPresets();
+  buildNumpad();
+}
+
+const PRESETS = [50, 100, 200, 500];
+
+function buildPresets() {
+  const row = document.getElementById('preset-row');
+  row.innerHTML = '';
+  PRESETS.filter(v => v <= state.availableBalance).forEach(v => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-chip';
+    btn.textContent = '$' + v;
+    btn.onclick = () => setAmount(v);
+    btn.dataset.val = v;
+    row.appendChild(btn);
+  });
+}
+
+function buildNumpad() {
+  const pad = document.getElementById('numpad');
+  pad.innerHTML = '';
+  ['1','2','3','4','5','6','7','8','9','DEL','0','MAX'].forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'numpad-key' + (k === 'DEL' || k === 'MAX' ? ' alt' : '');
+    btn.textContent = k;
+    btn.onclick = () => handleKey(k);
+    pad.appendChild(btn);
+  });
+}
+
+function handleKey(k) {
+  if (k === 'DEL') { setAmount(Math.floor(state.withdrawAmount / 10)); return; }
+  if (k === 'MAX') { setAmount(Math.floor(state.availableBalance)); return; }
+  const next = state.withdrawAmount * 10 + parseInt(k, 10);
+  if (next <= state.availableBalance) setAmount(next);
+}
+
+function setAmount(n) {
+  state.withdrawAmount = n;
+  updateAmountDisplay();
+  // Sync preset chips
+  document.querySelectorAll('.preset-chip').forEach(c => {
+    c.classList.toggle('active', parseInt(c.dataset.val) === n);
+  });
+}
+
+function updateAmountDisplay() {
+  const amt = state.withdrawAmount;
+  document.getElementById('wd-amount-display').textContent = amt > 0 ? amt.toLocaleString() : '0';
+  document.getElementById('wd-submit').disabled = amt <= 0;
+  document.getElementById('wd-submit').textContent = amt > 0 ? 'Get ' + fmt(amt) : 'Get My Money';
+  document.getElementById('wd-hint').textContent = 'Up to ' + fmt(state.availableBalance) + ' available';
+
+  const feeCard = document.getElementById('fee-card');
+  if (amt > 0) {
+    const fee = parseFloat((amt * state.feeRate).toFixed(2));
+    document.getElementById('fc-amount').textContent = fmt(amt);
+    document.getElementById('fc-fee').textContent = fmt(fee);
+    document.getElementById('fc-total').textContent = fmt(amt + fee);
+    feeCard.style.display = 'block';
+  } else {
+    feeCard.style.display = 'none';
+  }
+}
+
+// ── Advance logic ──────────────────────────────────────────────────
+function openModal(name) {
+  if (name === 'confirm') {
+    const amt = state.withdrawAmount;
+    const fee = parseFloat((amt * state.feeRate).toFixed(2));
+    document.getElementById('confirm-body').innerHTML =
+      `You're requesting <strong style="color:var(--gold)">${fmt(amt)}</strong> with a ${fmt(fee)} service fee.<br><br>
+       Total <strong>${fmt(amt + fee)}</strong> will be deducted from your next paycheck.`;
+  }
+  document.getElementById('modal-' + name).classList.add('open');
+}
+function closeModal(name) {
+  document.getElementById('modal-' + name).classList.remove('open');
+}
+
+function doAdvance() {
+  const amt = state.withdrawAmount;
+  closeModal('confirm');
+
+  // Simulate brief processing
+  const submitBtn = document.getElementById('wd-submit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Processing…';
+
+  setTimeout(() => {
+    const fee = parseFloat((amt * state.feeRate).toFixed(2));
+    const txId = 'tx-' + Date.now();
+    const now = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+    // Update state
+    state.availableBalance = parseFloat((state.availableBalance - amt).toFixed(2));
+    state.advancedAmount = parseFloat((state.advancedAmount + amt).toFixed(2));
+    state.pendingRepayment = parseFloat((state.pendingRepayment + amt).toFixed(2));
+    state.lifetimeAdvanced = parseFloat((state.lifetimeAdvanced + amt).toFixed(2));
+    state.withdrawAmount = 0;
+
+    state.transactions.unshift({
+      id: txId, type:'advance', amount: amt, fee: fee,
+      status:'completed', date: now, note:'Advance to bank ••••4291',
+    });
+
+    // Update profile/history stats
+    document.getElementById('prof-repay').textContent = fmt(state.pendingRepayment);
+    document.getElementById('prof-lifetime').textContent = fmt(state.lifetimeAdvanced);
+    document.getElementById('hist-lifetime').textContent = fmt(state.lifetimeAdvanced);
+
+    // Show success
+    document.getElementById('success-body').textContent =
+      `${fmt(amt)} is being transferred to your bank. It should arrive in ~2 minutes.`;
+    document.getElementById('tx-ref').textContent = 'Ref: ' + txId;
+    openModal('success');
+  }, 900);
+}
+
+// ── History screen ─────────────────────────────────────────────────
+let activeFilter = 'all';
+
+function renderHistory(filter) {
+  activeFilter = filter;
+
+  // Update stats
+  const advances = state.transactions.filter(t => t.type === 'advance' && t.status === 'completed');
+  const fees = advances.reduce((s, t) => s + t.fee, 0);
+  document.getElementById('hist-fees').textContent = fmt(fees);
+  document.getElementById('hist-count').textContent = advances.length;
+  document.getElementById('hist-lifetime').textContent = fmt(state.lifetimeAdvanced);
+
+  // Build filter pills
+  const filterRow = document.getElementById('filter-row');
+  filterRow.innerHTML = '';
+  [['all','All'],['advance','Advances'],['repayment','Repayments']].forEach(([key, label]) => {
+    const btn = document.createElement('button');
+    btn.className = 'pill' + (filter === key ? ' active' : '');
+    btn.textContent = label;
+    btn.onclick = () => renderHistory(key);
+    filterRow.appendChild(btn);
+  });
+
+  // Filter transactions
+  const filtered = filter === 'all' ? state.transactions : state.transactions.filter(t => t.type === filter);
+  const list = document.getElementById('full-tx-list');
+  list.innerHTML = '';
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-msg">No transactions found.</div>';
+  } else {
+    filtered.forEach(tx => list.appendChild(buildTxRow(tx)));
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+renderDashboard();
+renderWithdraw();
+</script>
+</body>
+</html>
