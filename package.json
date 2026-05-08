@@ -18,6 +18,7 @@
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/native": "^6.1.17",
+    "@react-navigation/native-stack": "^6.9.18",
     "@shopify/flash-list": "^1.6.3",
     "@tanstack/react-query": "^5.24.1",
     "astronomy-engine": "^2.1.19",
@@ -76,7 +77,7 @@
       ]
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!(react-native|@react-native|@react-navigation|react-native-reanimated|react-native-svg|astronomy-engine)/)"
+      "node_modules/(?!(react-native|@react-native|@react-navigation|react-native-reanimated|react-native-svg|astronomy-engine|zustand)/)"
     ],
     "testMatch": [
       "**/tests/**/*.test.ts",

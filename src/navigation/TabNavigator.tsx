@@ -1,6 +1,6 @@
 /**
  * ดาวเทวา — Bottom Tab Navigator
- * 5 screens: Clock, Daily Brief, Calendar, Almanac, Watch Face
+ * 6 screens: Clock, Daily Brief, Calendar, Almanac, Watch Face, Wages
  */
 
 import React from 'react';
@@ -14,6 +14,7 @@ import DailyBriefScreen from '../screens/DailyBriefScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import AlmanacScreen from '../screens/AlmanacScreen';
 import WatchFaceScreen from '../screens/WatchFaceScreen';
+import {EWANavigator} from './EWANavigator';
 
 export type RootTabParamList = {
   Clock: undefined;
@@ -21,9 +22,13 @@ export type RootTabParamList = {
   Calendar: undefined;
   Almanac: undefined;
   WatchFace: undefined;
+  Wages: undefined;
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
+
+// EWANavigator is not a single screen component but a navigator; wrap it for the tab
+function WagesTab() { return <EWANavigator />; }
 
 interface TabIconProps {
   symbol: string;
@@ -88,6 +93,14 @@ export function TabNavigator() {
         options={{
           tabBarLabel: 'นาฬิกาข้อมือ',
           tabBarIcon: ({focused}) => <TabIcon symbol="⌚" focused={focused} />,
+        }}
+      />
+      <Tab.Screen
+        name="Wages"
+        component={WagesTab}
+        options={{
+          tabBarLabel: 'Wages',
+          tabBarIcon: ({focused}) => <TabIcon symbol="💰" focused={focused} />,
         }}
       />
     </Tab.Navigator>
